@@ -4,6 +4,11 @@ import path from "path";
 import { chunkDocument, type RawDoc } from "./chunker";
 import { EMBEDDING_MODEL } from "./embeddings";
 import { getStore } from "./vectorstore";
+import {
+  listUploads,
+  loadUploadContents,
+  uploadsFingerprintParts,
+} from "./uploads";
 import type { Chunk } from "./types";
 
 const DOC_META: Record<string, { id: string; title: string }> = {
@@ -18,7 +23,8 @@ function knowledgeDir(): string {
   return path.join(process.cwd(), "knowledge");
 }
 
-export function loadRawDocs(): RawDoc[] {
+/** Sample Northstar markdown docs (committed under knowledge/). */
+export function loadSampleDocs(): RawDoc[] {
   const dir = knowledgeDir();
   const files = Object.keys(DOC_META);
   const docs: RawDoc[] = [];
@@ -31,17 +37,36 @@ export function loadRawDocs(): RawDoc[] {
       title: meta.title,
       filename,
       content: fs.readFileSync(full, "utf8"),
+      source: "sample",
     });
   }
   return docs;
 }
 
-export function buildChunks(): Chunk[] {
-  const docs = loadRawDocs();
+/** Sample KB + user uploads under knowledge/uploads/. */
+export async function loadRawDocs(): Promise<RawDoc[]> {
+  const samples = loadSampleDocs();
+  const uploads: RawDoc[] = [];
+  for (const rec of listUploads()) {
+    const loaded = await loadUploadContents(rec);
+    if (!loaded) continue;
+    uploads.push({
+      id: loaded.id,
+      title: loaded.title,
+      filename: loaded.filename,
+      content: loaded.content,
+      source: "upload",
+    });
+  }
+  return [...samples, ...uploads];
+}
+
+export async function buildChunks(): Promise<Chunk[]> {
+  const docs = await loadRawDocs();
   return docs.flatMap((d) => chunkDocument(d));
 }
 
-/** Stable fingerprint of KB files + embedding model — used to decide if disk index is fresh. */
+/** Stable fingerprint of sample KB + uploads + embedding model — invalidates stale disk indexes. */
 export function knowledgeFingerprint(): string {
   const dir = knowledgeDir();
   const parts: string[] = [EMBEDDING_MODEL];
@@ -56,12 +81,15 @@ export function knowledgeFingerprint(): string {
     const hash = crypto.createHash("sha256").update(body).digest("hex").slice(0, 16);
     parts.push(`${filename}:${st.size}:${hash}`);
   }
+  parts.push(...uploadsFingerprintParts());
   return crypto.createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24);
 }
 
 export type IndexStats = {
   chunkCount: number;
   docCount: number;
+  sampleDocCount: number;
+  uploadDocCount: number;
   backend: "semantic";
   model: string;
   fromDisk: boolean;
@@ -80,28 +108,31 @@ export async function ensureIndex(opts?: {
 }): Promise<IndexStats> {
   const store = getStore();
   const fingerprint = knowledgeFingerprint();
-  const docs = loadRawDocs();
+  const sampleCount = loadSampleDocs().length;
+  const uploadCount = listUploads().length;
+  const docCount = sampleCount + uploadCount;
+
+  const stats = (
+    fromDisk: boolean,
+    chunkCount: number,
+    model: string
+  ): IndexStats => ({
+    chunkCount,
+    docCount,
+    sampleDocCount: sampleCount,
+    uploadDocCount: uploadCount,
+    backend: "semantic",
+    model,
+    fromDisk,
+    fingerprint,
+  });
 
   if (!opts?.force && store.isReady && store.getFingerprint() === fingerprint) {
-    return {
-      chunkCount: store.size,
-      docCount: docs.length,
-      backend: "semantic",
-      model: store.getModel(),
-      fromDisk: true,
-      fingerprint,
-    };
+    return stats(true, store.size, store.getModel());
   }
 
   if (!opts?.force && !store.isReady && store.loadFromDisk(fingerprint)) {
-    return {
-      chunkCount: store.size,
-      docCount: docs.length,
-      backend: "semantic",
-      model: store.getModel(),
-      fromDisk: true,
-      fingerprint,
-    };
+    return stats(true, store.size, store.getModel());
   }
 
   if (!indexingPromise || opts?.force) {
@@ -109,29 +140,15 @@ export async function ensureIndex(opts?: {
       if (opts?.force) store.clear();
       // Try disk again inside the lock (another process may have written it)
       if (!opts?.force && store.loadFromDisk(fingerprint)) {
-        return {
-          chunkCount: store.size,
-          docCount: docs.length,
-          backend: "semantic" as const,
-          model: store.getModel(),
-          fromDisk: true,
-          fingerprint,
-        };
+        return stats(true, store.size, store.getModel());
       }
-      const chunks = buildChunks();
+      const chunks = await buildChunks();
       console.log(
         `CiteQA: embedding ${chunks.length} chunks with ${EMBEDDING_MODEL} (local)…`
       );
       await store.buildAndPersist(chunks, fingerprint, opts?.onProgress);
       console.log(`CiteQA: index persisted under data/index/ (${chunks.length} vectors).`);
-      return {
-        chunkCount: chunks.length,
-        docCount: docs.length,
-        backend: "semantic" as const,
-        model: EMBEDDING_MODEL,
-        fromDisk: false,
-        fingerprint,
-      };
+      return stats(false, chunks.length, EMBEDDING_MODEL);
     })().finally(() => {
       indexingPromise = null;
     });
@@ -141,9 +158,21 @@ export async function ensureIndex(opts?: {
 }
 
 export function listDocs() {
-  return loadRawDocs().map((d) => ({
+  const samples = loadSampleDocs().map((d) => ({
     id: d.id,
     title: d.title,
     filename: d.filename,
+    source: "sample" as const,
   }));
+  const uploads = listUploads().map((d) => ({
+    id: d.id,
+    title: d.title,
+    filename: `uploads/${d.filename}`,
+    originalName: d.originalName,
+    size: d.size,
+    uploadedAt: d.uploadedAt,
+    ext: d.ext,
+    source: "upload" as const,
+  }));
+  return [...samples, ...uploads];
 }

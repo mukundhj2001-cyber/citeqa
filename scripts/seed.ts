@@ -1,5 +1,6 @@
 /**
- * Rebuild the local semantic index from knowledge/*.md and persist under data/index/.
+ * Rebuild the local semantic index from knowledge/*.md + knowledge/uploads/
+ * and persist under data/index/.
  * Downloads Xenova/all-MiniLM-L6-v2 into .cache/transformers/ on first run (local only).
  */
 import { ensureIndex, listDocs } from "../src/lib/knowledge";
@@ -17,7 +18,7 @@ async function main() {
   process.stdout.write("\n");
   console.log("CiteQA index seeded.");
   console.log(
-    `Docs: ${stats.docCount}, chunks: ${stats.chunkCount}, backend: ${stats.backend}`
+    `Docs: ${stats.docCount} (sample ${stats.sampleDocCount}, uploads ${stats.uploadDocCount}), chunks: ${stats.chunkCount}, backend: ${stats.backend}`
   );
   console.log(`Model: ${stats.model}`);
   console.log(`Fingerprint: ${stats.fingerprint}`);
@@ -25,7 +26,7 @@ async function main() {
   console.log(
     "Documents:",
     listDocs()
-      .map((d) => d.title)
+      .map((d) => `${d.title}${d.source === "upload" ? " [upload]" : ""}`)
       .join(", ")
   );
 }

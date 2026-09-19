@@ -47,7 +47,7 @@ Starter chips appear on the empty chat state.
 ## Architecture (Part A — local semantic embeddings)
 
 ```
-knowledge/*.md
+knowledge/*.md + knowledge/uploads/
       ↓ section-aware chunker
 local MiniLM embeddings  (@xenova/transformers, Xenova/all-MiniLM-L6-v2)
       ↓
@@ -94,18 +94,61 @@ npm run index
 
 Edit files under `knowledge/`, then run `npm run seed` again (or just chat — `ensureIndex()` rebuilds automatically when the fingerprint changes).
 
+
+## Part B — Document upload & re-index
+
+Add your own help articles; CiteQA re-chunks, re-embeds **locally** (same MiniLM path as Part A), and persists an updated `data/index/`. Uploaded document text is **never** sent to OpenAI for embeddings — optional `OPENAI_API_KEY` remains generation-only.
+
+### How to upload
+
+1. `npm run dev` → open the app → side panel **Docs** tab (or **Manage uploads** on mobile).
+2. Drop or choose a `.md`, `.txt`, or `.pdf` (max **5 MB**).
+3. CiteQA extracts text (PDFs via local `pdf-parse`), saves under `knowledge/uploads/`, then **re-indexes** automatically.
+4. Ask a question only the new doc answers — citations should point at that upload.
+5. **Delete** an upload from the list (re-indexes so it stops appearing). Use **Re-index** anytime to force a rebuild.
+
+Sample Northstar docs in `knowledge/*.md` always load and stay read-only.
+
+### API
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/docs` | List sample + uploads, size limits |
+| `POST` | `/api/docs/upload` | Multipart field `file` (+ optional `reindex=1`) |
+| `DELETE` | `/api/docs/:id` | Remove an upload (`up-…` ids only) + re-index |
+| `POST` | `/api/docs/reindex` | Force re-chunk / local re-embed / persist |
+
+### Privacy
+
+- Embeddings: **on-device** `Xenova/all-MiniLM-L6-v2` only.
+- Uploads live on disk under `knowledge/uploads/` (gitignored except `.gitkeep`).
+- Fingerprint includes upload content hashes so stale indexes are invalidated after add/delete.
+
+### Layout (Part B)
+
+```
+knowledge/
+├── *.md                 # Sample Northstar KB (committed)
+└── uploads/             # User files + manifest.json (gitignored)
+data/index/              # Rebuilt vectors after upload / re-index
+src/app/api/docs/        # upload · list · delete · reindex
+src/components/DocsPanel.tsx
+src/lib/uploads.ts       # validation, PDF extract, registry
+```
+
 ## Project layout
 
 ```
 citeqa/
-├── knowledge/              # Sample Northstar Analytics markdown KB
+├── knowledge/              # Sample Northstar markdown KB
+│   └── uploads/            # User uploads (gitignored; .gitkeep committed)
 ├── data/index/             # Persisted vectors (created by seed; gitignored)
 ├── .cache/transformers/    # Local model cache (gitignored)
 ├── scripts/seed.ts         # Force rebuild embeddings + print stats
 ├── src/
-│   ├── app/                # App Router pages + API
-│   ├── components/         # Chat widget UI
-│   └── lib/                # RAG pipeline
+│   ├── app/                # App Router pages + API (/api/chat, /api/docs/…)
+│   ├── components/         # ChatWidget + DocsPanel
+│   └── lib/                # RAG + uploads + vectorstore
 ├── .env.example
 └── README.md
 ```
@@ -131,7 +174,7 @@ citeqa/
 |---------|-------------|
 | `npm run dev` | Dev server |
 | `npm run build` / `npm start` | Production |
-| `npm run seed` / `npm run index` | Rebuild local embeddings + persist `data/index/` |
+| `npm run seed` / `npm run index` | Rebuild local embeddings (sample + uploads) → `data/index/` |
 | `npm run lint` | ESLint |
 
 ## License

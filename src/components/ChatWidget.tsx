@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatMessage, Citation, ChatResponse } from "@/lib/types";
+import DocsPanel from "@/components/DocsPanel";
 
 const STARTERS = [
   "How do refunds work?",
@@ -27,6 +28,7 @@ export default function ChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
   const [showRetrieval, setShowRetrieval] = useState(true);
+  const [sideTab, setSideTab] = useState<"sources" | "docs">("sources");
   const [indexInfo, setIndexInfo] = useState<string>("Indexing…");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -181,13 +183,70 @@ export default function ChatWidget() {
             </button>
           </div>
           <p className="mt-2 text-center text-[11px] text-slate-400">
-            Answers cite Northstar docs only · weak matches refuse rather than invent policy
+            Answers cite your indexed docs · weak matches refuse rather than invent policy
           </p>
+          <button
+            type="button"
+            onClick={() => setSideTab("docs")}
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-2 text-xs font-medium text-indigo-700 lg:hidden"
+          >
+            Manage uploads & re-index
+          </button>
         </div>
       </div>
 
+      {/* Mobile docs drawer */}
+      {sideTab === "docs" && (
+        <div className="fixed inset-0 z-40 flex flex-col bg-white lg:hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <h2 className="text-sm font-semibold text-slate-800">Knowledge base</h2>
+            <button
+              type="button"
+              onClick={() => setSideTab("sources")}
+              className="text-xs font-medium text-indigo-600"
+            >
+              Close
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <DocsPanel onIndexChange={setIndexInfo} />
+          </div>
+        </div>
+      )}
+
       {/* Side panel */}
       <aside className="hidden w-[340px] shrink-0 flex-col border-l border-slate-200 bg-white lg:flex">
+        <div className="flex border-b border-slate-100">
+          <button
+            type="button"
+            onClick={() => setSideTab("sources")}
+            className={`flex-1 px-3 py-2.5 text-xs font-semibold transition ${
+              sideTab === "sources"
+                ? "border-b-2 border-indigo-600 text-indigo-700"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Sources
+          </button>
+          <button
+            type="button"
+            onClick={() => setSideTab("docs")}
+            className={`flex-1 px-3 py-2.5 text-xs font-semibold transition ${
+              sideTab === "docs"
+                ? "border-b-2 border-indigo-600 text-indigo-700"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Docs
+          </button>
+        </div>
+
+        {sideTab === "docs" ? (
+          <div className="min-h-0 flex-1">
+            <DocsPanel onIndexChange={setIndexInfo} />
+          </div>
+        ) : (
+          <>
         <div className="border-b border-slate-100 px-4 py-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-800">Sources & retrieval</h2>
@@ -278,6 +337,8 @@ export default function ChatWidget() {
             </div>
           )}
         </div>
+          </>
+        )}
       </aside>
     </div>
   );
@@ -315,7 +376,7 @@ function EmptyState({
         ))}
       </div>
       <p className="mt-4 text-[11px] text-slate-400">
-        Try an out-of-corpus question like “What’s your enterprise SLA for HIPAA?”
+        Try an out-of-corpus question, or open the <span className="font-medium text-slate-500">Docs</span> tab to upload your own.
       </p>
     </div>
   );

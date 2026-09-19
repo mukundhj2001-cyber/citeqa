@@ -43,3 +43,9 @@ next-env.d.ts
 # CiteQA Part A — local embedding model cache + persisted vector index
 .cache/
 data/index/
+
+# CiteQA Part B — user uploads (keep folder + .gitkeep; sample KB stays committed)
+knowledge/uploads/*
+!knowledge/uploads/.gitkeep
+# Allow committed empty manifest template if present; live registry is local
+knowledge/uploads/manifest.json

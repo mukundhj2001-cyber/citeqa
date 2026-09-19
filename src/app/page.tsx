@@ -14,7 +14,7 @@ export default function Home() {
             </div>
           </div>
           <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">
-            Fictional KB · Northstar Analytics
+            Local embeddings · upload your KB
           </div>
         </div>
       </div>
@@ -22,11 +22,13 @@ export default function Home() {
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6">
         <ChatWidget />
         <p className="mt-6 max-w-2xl text-center text-xs text-slate-500">
-          Upwork/Fiverr-style portfolio demo. Retrieval uses a local TF-IDF
-          vector index over markdown docs. Set{" "}
+          Upwork/Fiverr-style portfolio demo. Retrieval uses{" "}
+          <strong className="font-medium text-slate-600">local MiniLM</strong>{" "}
+          embeddings over the sample Northstar docs plus anything you upload
+          (Docs tab). Document text is never sent to an embedding API. Set{" "}
           <code className="rounded bg-slate-200/80 px-1">OPENAI_API_KEY</code>{" "}
-          for synthesized answers; without it, CiteQA still demos retrieval and
-          quotes top snippets.
+          for synthesized answers only; without it, CiteQA still demos retrieval
+          and quotes top snippets.
         </p>
       </div>
     </main>

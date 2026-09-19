@@ -2,6 +2,7 @@ export type DocMeta = {
   id: string;
   title: string;
   filename: string;
+  source?: "sample" | "upload";
 };
 
 export type Chunk = {
