@@ -9,9 +9,9 @@ function snippetOf(text: string, max = 220): string {
 }
 
 export async function answerQuestion(message: string): Promise<ChatResponse> {
-  ensureIndex();
+  await ensureIndex();
   const store = getStore();
-  const hits = store.search(message, 6);
+  const hits = await store.search(message, 6);
   const { answer, mode, refused } = await generateAnswer(message, hits);
 
   const used = refused || isWeakRetrieval(hits) ? [] : hits.slice(0, 4);

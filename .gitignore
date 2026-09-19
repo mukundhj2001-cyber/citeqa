@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CiteQA Part A — local embedding model cache + persisted vector index
+.cache/
+data/index/

@@ -1,11 +1,36 @@
+/**
+ * Rebuild the local semantic index from knowledge/*.md and persist under data/index/.
+ * Downloads Xenova/all-MiniLM-L6-v2 into .cache/transformers/ on first run (local only).
+ */
 import { ensureIndex, listDocs } from "../src/lib/knowledge";
 
-const stats = ensureIndex();
-console.log("CiteQA index seeded.");
-console.log(`Docs: ${stats.docCount}, chunks: ${stats.chunkCount}`);
-console.log(
-  "Documents:",
-  listDocs()
-    .map((d) => d.title)
-    .join(", ")
-);
+async function main() {
+  console.log("CiteQA seed — local MiniLM embeddings (no cloud embedding API)…");
+  const stats = await ensureIndex({
+    force: true,
+    onProgress: (done, total) => {
+      if (done === total || done % 5 === 0) {
+        process.stdout.write(`\r  embedded ${done}/${total}`);
+      }
+    },
+  });
+  process.stdout.write("\n");
+  console.log("CiteQA index seeded.");
+  console.log(
+    `Docs: ${stats.docCount}, chunks: ${stats.chunkCount}, backend: ${stats.backend}`
+  );
+  console.log(`Model: ${stats.model}`);
+  console.log(`Fingerprint: ${stats.fingerprint}`);
+  console.log(`Persisted: data/index/{manifest.json,chunks.json,vectors.bin}`);
+  console.log(
+    "Documents:",
+    listDocs()
+      .map((d) => d.title)
+      .join(", ")
+  );
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

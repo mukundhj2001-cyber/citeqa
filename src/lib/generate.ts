@@ -1,8 +1,13 @@
 import OpenAI from "openai";
 import type { ScoredChunk } from "./types";
 
-const WEAK_SCORE = 0.12;
-const MIN_TOP_SCORE = 0.18;
+/**
+ * Cosine similarity thresholds for L2-normalized MiniLM embeddings.
+ * Typical in-corpus hits land ~0.35–0.75; out-of-corpus often <0.30.
+ * Tuned empirically for the Northstar sample KB (see smoke tests).
+ */
+const WEAK_SCORE = 0.28;
+const MIN_TOP_SCORE = 0.35;
 
 export function isWeakRetrieval(hits: ScoredChunk[]): boolean {
   if (!hits.length) return true;
