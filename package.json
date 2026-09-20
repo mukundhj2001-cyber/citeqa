@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
     "index": "tsx scripts/seed.ts",
-    "smoke": "tsx scripts/smoke-retrieve.ts"
+    "smoke": "tsx scripts/smoke-retrieve.ts",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",

@@ -44,19 +44,34 @@ export async function getExtractor(): Promise<FeaturePipeline> {
 }
 
 function toFloat32(data: Float32Array | number[], expectedLen: number): Float32Array {
-  if (data instanceof Float32Array && data.length === expectedLen) return data;
+  // Always copy — Transformers.js may reuse an internal buffer; returning the
+  // same reference lets the next embed overwrite vectors still in use.
   const out = new Float32Array(expectedLen);
   const src = data instanceof Float32Array ? data : Float32Array.from(data);
-  out.set(src.subarray(0, expectedLen));
+  out.set(src.subarray(0, Math.min(src.length, expectedLen)));
   return out;
+}
+
+/** Serialize extractor calls — ONNX/wasm is not reliably re-entrant. */
+let embedChain: Promise<unknown> = Promise.resolve();
+
+function withEmbedLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = embedChain.then(fn, fn);
+  embedChain = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
 }
 
 /** Embed one string → L2-normalized Float32Array of length EMBEDDING_DIMS. */
 export async function embedText(text: string): Promise<Float32Array> {
-  const extractor = await getExtractor();
-  const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
-  const output = await extractor(cleaned || " ", { pooling: "mean", normalize: true });
-  return toFloat32(output.data, EMBEDDING_DIMS);
+  return withEmbedLock(async () => {
+    const extractor = await getExtractor();
+    const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
+    const output = await extractor(cleaned || " ", { pooling: "mean", normalize: true });
+    return toFloat32(output.data, EMBEDDING_DIMS);
+  });
 }
 
 /** Embed many texts (sequential batches to bound memory). */

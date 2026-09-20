@@ -222,6 +222,80 @@ The chat header shows a short mode hint (e.g. `Ollama (llama3.2)`).
 - Firewall / WSL: if CiteQA runs in WSL2 and Ollama on Windows, you may need to point `OLLAMA_BASE_URL` at the Windows host IP, not `127.0.0.1`.
 - Document uploads and embeddings never call Ollama or OpenAI for vectors — only the **answer** step uses a chat model.
 
+
+## Part D — Eval harness (prove quality to clients)
+
+Fixed questions + expected behavior + pass/fail report. Privacy-friendly: runs the **same** `answerQuestion` pipeline as chat and works in **offline** retrieval mode (Ollama optional; **OpenAI not required**).
+
+### Why this exists
+
+Freelance / client demos need more than “try the chat.” `npm run eval` shows that CiteQA:
+
+- retrieves the right sections for in-corpus topics (refunds, Pro, password reset, onboarding, cancel/billing)
+- handles paraphrases (“money back” → refunds)
+- **refuses** out-of-corpus asks (HIPAA/SLA-style, FedRAMP, unrelated)
+
+Exit code **1** if any case fails — ready for CI later.
+
+### Run (macOS / Linux / Windows)
+
+```bash
+cd citeqa          # or wherever you cloned this
+npm install
+npm run seed       # first time / after KB changes
+npm run eval
+```
+
+On **Windows** (PowerShell or cmd): same commands — Node + npm are enough. No bash required. If you use WSL, run them inside the WSL project folder.
+
+Optional: start Ollama first for fluent answers; offline quote mode is enough for pass/fail.
+
+### What it checks
+
+| Case type | Pass rule |
+|-----------|-----------|
+| `expectRefuse: true` | Response must have `refused=true` |
+| In-corpus / paraphrase | Pass if **top retrieval** hits the hinted doc/section **or** answer/citations contain any `mustIncludeAny` keyword (offline-friendly; does not require a fluent LLM) |
+
+Checks are intentionally realistic for offline mode (keyword/retrieval OR), not brittle full-sentence string equals.
+
+### Fixture & how to add cases
+
+Edit [`evals/cases.json`](evals/cases.json). Each case:
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `id` | yes | Stable slug for the summary table |
+| `question` | yes | User question |
+| `expectRefuse` | yes | `true` for out-of-corpus |
+| `mustIncludeAny` | no | Strings that should appear in answer **or** top citation section/title |
+| `mustCiteDoc` | no | Substring of expected `docTitle` in top retrieval/citations |
+| `mustCiteSection` | no | Substring of expected `section` |
+
+Example:
+
+```json
+{
+  "id": "refunds-paraphrase-money-back",
+  "question": "I'd like my money back — what's the refund process?",
+  "expectRefuse": false,
+  "mustIncludeAny": ["refund", "14 days"],
+  "mustCiteDoc": "Pricing",
+  "mustCiteSection": "Refund"
+}
+```
+
+Re-run `npm run eval` after edits. Keep ~12–20 cases so the suite stays fast for demos.
+
+### Show clients
+
+1. `npm run seed` → `npm run eval` and share the summary table (PASS/FAIL + top hit).
+2. Flip an out-of-corpus case’s docs offline and show refuse still holds.
+3. Point at `evals/cases.json` as the living acceptance checklist for their help center.
+
+Script: [`scripts/eval.ts`](scripts/eval.ts).
+
+
 ## Project layout
 
 ```
@@ -230,7 +304,11 @@ citeqa/
 │   └── uploads/            # User uploads (gitignored; .gitkeep committed)
 ├── data/index/             # Persisted vectors (created by seed; gitignored)
 ├── .cache/transformers/    # Local model cache (gitignored)
-├── scripts/seed.ts         # Force rebuild embeddings + print stats
+├── evals/cases.json        # Part D fixed eval questions + expectations
+├── scripts/
+│   ├── seed.ts             # Force rebuild embeddings + print stats
+│   ├── smoke-retrieve.ts   # Quick retrieval smoke
+│   └── eval.ts             # Part D pass/fail harness (npm run eval)
 ├── src/
 │   ├── app/                # App Router pages + API (/api/chat, /api/docs/…)
 │   ├── components/         # ChatWidget + DocsPanel
@@ -243,7 +321,7 @@ citeqa/
 
 > I’ll build a support chatbot that answers **only from your help center**, with **clickable citations** so agents and customers can verify every claim. Weak matches refuse instead of hallucinating refund or pricing policy — critical for trust.
 >
-> Stack: Next.js + TypeScript, **local** embeddings + persistent vector index, **Ollama-first** private generation (OpenAI fallback). Deliverables: chat widget UI, indexed docs, retrieval debug panel, and a short handoff README so your team can swap in real articles.
+> Stack: Next.js + TypeScript, **local** embeddings + persistent vector index, **Ollama-first** private generation (OpenAI fallback). Deliverables: chat widget UI, indexed docs, retrieval debug panel, **`npm run eval` quality harness**, and a short handoff README so your team can swap in real articles.
 >
 > Similar to the CiteQA demo: ask “How do refunds work?” and get a grounded answer with source snippets; ask something outside the docs and get a clear “not in the knowledge base.”
 
@@ -261,6 +339,8 @@ citeqa/
 | `npm run dev` | Dev server |
 | `npm run build` / `npm start` | Production |
 | `npm run seed` / `npm run index` | Rebuild local embeddings (sample + uploads) → `data/index/` |
+| `npm run smoke` | Quick retrieval smoke (few hardcoded queries) |
+| `npm run eval` | Part D eval harness — fixed cases, pass/fail, exit 1 on failure |
 | `npm run lint` | ESLint |
 
 ## License

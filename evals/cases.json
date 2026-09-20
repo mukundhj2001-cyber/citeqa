@@ -1,0 +1,130 @@
+[
+  {
+    "id": "refunds-direct",
+    "question": "How do refunds work?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["refund", "14 days", "billing@"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "Refund"
+  },
+  {
+    "id": "refunds-paraphrase-money-back",
+    "question": "I'd like my money back — what's the refund process?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["refund", "14 days", "money"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "Refund"
+  },
+  {
+    "id": "refunds-paraphrase-request",
+    "question": "How do I request a refund?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["refund", "14 days", "billing@"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "Refund"
+  },
+  {
+    "id": "pro-plan-direct",
+    "question": "What's on Pro?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["Pro", "2,000,000", "API", "cohort"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "Pro"
+  },
+  {
+    "id": "pro-plan-paraphrase",
+    "question": "What features does the Pro plan include?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["Pro", "events", "seats", "API"],
+    "mustCiteDoc": "Pricing"
+  },
+  {
+    "id": "password-reset",
+    "question": "How do I reset my password?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["Forgot password", "60 minutes", "password"],
+    "mustCiteDoc": "Troubleshooting",
+    "mustCiteSection": "Password"
+  },
+  {
+    "id": "password-paraphrase",
+    "question": "I forgot my password — how do I change it?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["Forgot password", "password", "reset"],
+    "mustCiteSection": "Password"
+  },
+  {
+    "id": "onboarding-getting-started",
+    "question": "What's the onboarding checklist for a new workspace?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["workspace", "snippet", "funnel", "dashboard", "checklist"],
+    "mustCiteDoc": "Getting Started",
+    "mustCiteSection": "checklist"
+  },
+  {
+    "id": "onboarding-tracking",
+    "question": "How do I install the tracking snippet?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["write key", "snippet", "northstar.init", "Settings"],
+    "mustCiteDoc": "Getting Started",
+    "mustCiteSection": "tracking"
+  },
+  {
+    "id": "billing-cancel",
+    "question": "How do I cancel my subscription?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["Cancel", "Billing", "30 days"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "Cancel"
+  },
+  {
+    "id": "billing-how-it-works",
+    "question": "How does billing work?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["billing", "credit card", "renew", "invoice"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "billing"
+  },
+  {
+    "id": "free-trial",
+    "question": "Do you offer a free trial?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["14-day", "trial", "Pro"],
+    "mustCiteDoc": "Pricing",
+    "mustCiteSection": "trial"
+  },
+  {
+    "id": "sso-in-corpus",
+    "question": "Do you offer SSO?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["SSO", "SAML", "Business"],
+    "mustCiteDoc": "FAQ"
+  },
+  {
+    "id": "export-data",
+    "question": "Can I export my data?",
+    "expectRefuse": false,
+    "mustIncludeAny": ["export", "CSV", "Pro"],
+    "mustCiteDoc": "FAQ"
+  },
+  {
+    "id": "out-hipaa-sla",
+    "question": "What's your enterprise HIPAA SLA?",
+    "expectRefuse": true
+  },
+  {
+    "id": "out-fedramp",
+    "question": "Are you FedRAMP authorized for government workloads?",
+    "expectRefuse": true
+  },
+  {
+    "id": "out-pci-dss",
+    "question": "What is your PCI DSS attestation ID and QSA letter?",
+    "expectRefuse": true
+  },
+  {
+    "id": "out-unrelated-physics",
+    "question": "Explain quantum chromodynamics confinement",
+    "expectRefuse": true
+  }
+]
