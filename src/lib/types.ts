@@ -38,13 +38,16 @@ export type RetrievalHit = {
   rank: number;
 };
 
+/** Answer generation backend used for this turn. */
+export type ChatMode = "ollama" | "openai" | "offline" | "refuse";
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
   retrieval?: RetrievalHit[];
-  mode?: "llm" | "offline" | "refuse";
+  mode?: ChatMode;
   refused?: boolean;
 };
 
@@ -56,6 +59,6 @@ export type ChatResponse = {
   answer: string;
   citations: Citation[];
   retrieval: RetrievalHit[];
-  mode: "llm" | "offline" | "refuse";
+  mode: ChatMode;
   refused: boolean;
 };

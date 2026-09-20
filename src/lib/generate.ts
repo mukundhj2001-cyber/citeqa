@@ -1,5 +1,11 @@
 import OpenAI from "openai";
 import type { ScoredChunk } from "./types";
+import {
+  getOllamaBaseUrl,
+  getOllamaModel,
+  isOllamaReachable,
+  ollamaChat,
+} from "./ollama";
 
 /**
  * Cosine similarity thresholds for L2-normalized MiniLM embeddings.
@@ -8,6 +14,8 @@ import type { ScoredChunk } from "./types";
  */
 const WEAK_SCORE = 0.28;
 const MIN_TOP_SCORE = 0.35;
+
+export type GenerationMode = "ollama" | "openai" | "offline" | "refuse";
 
 export function isWeakRetrieval(hits: ScoredChunk[]): boolean {
   if (!hits.length) return true;
@@ -38,10 +46,36 @@ Rules:
 - When you use a fact, cite it inline like [1], [2] matching the context numbering.
 - Never mention that you are an AI model unless asked.`;
 
+/**
+ * Resolve which generation backend will be used for the next answer
+ * (does not include refuse — that depends on retrieval).
+ * Precedence: Ollama (if reachable) → OpenAI (if key) → offline.
+ */
+export async function resolveGenerationBackend(): Promise<{
+  mode: "ollama" | "openai" | "offline";
+  ollama: boolean;
+  openai: boolean;
+  ollamaBaseUrl: string;
+  ollamaModel: string;
+}> {
+  const ollama = await isOllamaReachable();
+  const openai = hasOpenAI();
+  let mode: "ollama" | "openai" | "offline" = "offline";
+  if (ollama) mode = "ollama";
+  else if (openai) mode = "openai";
+  return {
+    mode,
+    ollama,
+    openai,
+    ollamaBaseUrl: getOllamaBaseUrl(),
+    ollamaModel: getOllamaModel(),
+  };
+}
+
 export async function generateAnswer(
   question: string,
   hits: ScoredChunk[]
-): Promise<{ answer: string; mode: "llm" | "offline" | "refuse"; refused: boolean }> {
+): Promise<{ answer: string; mode: GenerationMode; refused: boolean }> {
   if (isWeakRetrieval(hits)) {
     return {
       answer:
@@ -51,6 +85,26 @@ export async function generateAnswer(
     };
   }
 
+  const userContent = `Context:\n${contextBlock(hits)}\n\nQuestion: ${question}`;
+
+  // 1) Prefer local Ollama (private — docs/chunks stay on-device)
+  if (await isOllamaReachable()) {
+    try {
+      const answer = await ollamaChat(
+        [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: userContent },
+        ],
+        { temperature: 0.2 }
+      );
+      return { answer, mode: "ollama", refused: false };
+    } catch (err) {
+      console.error("Ollama generation failed, trying next backend:", err);
+      // fall through to OpenAI / offline
+    }
+  }
+
+  // 2) OpenAI only when Ollama is unavailable (or just failed) and key is set
   if (hasOpenAI()) {
     try {
       const client = new OpenAI({
@@ -63,30 +117,36 @@ export async function generateAnswer(
         temperature: 0.2,
         messages: [
           { role: "system", content: SYSTEM },
-          {
-            role: "user",
-            content: `Context:\n${contextBlock(hits)}\n\nQuestion: ${question}`,
-          },
+          { role: "user", content: userContent },
         ],
       });
       const answer =
         completion.choices[0]?.message?.content?.trim() ||
         offlineCompose(question, hits);
-      return { answer, mode: "llm", refused: false };
+      return { answer, mode: "openai", refused: false };
     } catch (err) {
       console.error("OpenAI generation failed, falling back to offline:", err);
-      return { answer: offlineCompose(question, hits), mode: "offline", refused: false };
+      return {
+        answer: offlineCompose(question, hits),
+        mode: "offline",
+        refused: false,
+      };
     }
   }
 
-  return { answer: offlineCompose(question, hits), mode: "offline", refused: false };
+  // 3) Offline grounded quotes
+  return {
+    answer: offlineCompose(question, hits),
+    mode: "offline",
+    refused: false,
+  };
 }
 
 /** Offline-friendly answer: grounded quotes from top chunks, no invention. */
 function offlineCompose(question: string, hits: ScoredChunk[]): string {
   const top = hits.slice(0, 3);
   const lines: string[] = [
-    `Based on the Northstar Analytics docs (retrieval-only mode — set OPENAI_API_KEY for a synthesized answer):`,
+    `Based on the Northstar Analytics docs (retrieval-only mode — run Ollama locally or set OPENAI_API_KEY for a synthesized answer):`,
     "",
   ];
   top.forEach((h, i) => {

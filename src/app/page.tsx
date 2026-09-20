@@ -14,7 +14,7 @@ export default function Home() {
             </div>
           </div>
           <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">
-            Local embeddings · upload your KB
+            Local embeddings · Ollama-first · upload your KB
           </div>
         </div>
       </div>
@@ -25,10 +25,11 @@ export default function Home() {
           Upwork/Fiverr-style portfolio demo. Retrieval uses{" "}
           <strong className="font-medium text-slate-600">local MiniLM</strong>{" "}
           embeddings over the sample Northstar docs plus anything you upload
-          (Docs tab). Document text is never sent to an embedding API. Set{" "}
+          (Docs tab). Prefer{" "}
+          <strong className="font-medium text-slate-600">Ollama</strong> for
+          private answer generation; OpenAI is used only if Ollama is down and{" "}
           <code className="rounded bg-slate-200/80 px-1">OPENAI_API_KEY</code>{" "}
-          for synthesized answers only; without it, CiteQA still demos retrieval
-          and quotes top snippets.
+          is set. Without either, CiteQA quotes top snippets offline.
         </p>
       </div>
     </main>

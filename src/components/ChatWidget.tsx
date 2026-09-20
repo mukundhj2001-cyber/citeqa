@@ -37,9 +37,13 @@ export default function ChatWidget() {
     fetch("/api/health")
       .then((r) => r.json())
       .then((d) => {
-        setIndexInfo(
-          `${d.chunkCount} chunks · ${d.docCount} docs${d.llm ? " · LLM on" : " · offline retrieval"}`
-        );
+        const mode =
+          d.generationMode === "ollama"
+            ? ` · Ollama (${d.ollamaModel || "local"})`
+            : d.generationMode === "openai"
+              ? " · OpenAI"
+              : " · offline quotes";
+        setIndexInfo(`${d.chunkCount} chunks · ${d.docCount} docs${mode}`);
       })
       .catch(() => setIndexInfo("Index ready on first question"));
   }, []);
@@ -421,11 +425,13 @@ function MessageBubble({
         <div className="whitespace-pre-wrap">{renderContent(message.content)}</div>
         {!isUser && message.mode && (
           <div className="mt-2 text-[10px] uppercase tracking-wide opacity-60">
-            {message.mode === "llm"
-              ? "LLM + citations"
-              : message.mode === "refuse"
-                ? "Refused · not in docs"
-                : "Offline retrieval quotes"}
+            {message.mode === "ollama"
+              ? "Ollama (local) + citations"
+              : message.mode === "openai"
+                ? "OpenAI + citations"
+                : message.mode === "refuse"
+                  ? "Refused · not in docs"
+                  : "Offline retrieval quotes"}
           </div>
         )}
         {!isUser && message.citations && message.citations.length > 0 && (
