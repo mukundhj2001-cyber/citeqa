@@ -24,7 +24,7 @@ export default function DemoPage() {
             </div>
             <p className="text-xs text-slate-500">
               Chat + citations + retrieval
-              {pkg.includesAgent ? " + agent actions" : ""} · switch package to
+              {pkg.includesAgent ? " + autonomous agent tools" : ""} · switch package to
               preview tiers
             </p>
           </div>
@@ -57,12 +57,13 @@ export default function DemoPage() {
           onPackageChange={setPackageId}
         />
         <p className="mt-5 max-w-2xl text-center text-xs text-slate-500">
-          Try “How do refunds work?” then use Premium actions to create a ticket
-          or log to sheet — check{" "}
+          Premium Agent mode: try “What’s the refund policy?”, “I want a refund,
+          create a ticket and notify the team”, or “What’s your HIPAA SLA?” —
+          watch the tool trace, then check{" "}
           <a href="/admin" className="font-medium text-indigo-600 hover:underline">
             /admin
-          </a>{" "}
-          for the audit trail. Embeddings stay local; generation prefers Ollama.
+          </a>
+          . Embeddings stay local; agent prefers Ollama.
         </p>
       </div>
     </main>

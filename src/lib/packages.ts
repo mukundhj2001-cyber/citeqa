@@ -52,14 +52,15 @@ export const PACKAGES: PackageDef[] = [
   {
     id: "premium",
     name: "Premium",
-    tagline: "Agent actions + admin audit trail",
+    tagline: "Autonomous tool-calling agent + admin",
     priceLabel: "Full product",
     highlight: true,
     features: [
       "Everything in Standard",
-      "Agent actions: create ticket · log to sheet · webhook",
+      "Autonomous tool-calling support agent (multi-step)",
+      "Tools: search · ticket · escalate · CRM note · notify · knowledge gaps",
+      "Transparent tool trace + optional manual actions",
       "Admin dashboard: docs, eval, tickets, action log",
-      "Decision / audit trail for every grounded action",
     ],
     includesAgent: true,
     includesUpload: true,

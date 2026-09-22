@@ -1,3 +1,5 @@
+import type { ToolTraceEntry } from "@/lib/action-types";
+
 export type DocMeta = {
   id: string;
   title: string;
@@ -39,7 +41,7 @@ export type RetrievalHit = {
 };
 
 /** Answer generation backend used for this turn. */
-export type ChatMode = "ollama" | "openai" | "offline" | "refuse";
+export type ChatMode = "ollama" | "openai" | "offline" | "refuse" | "agent";
 
 export type ChatMessage = {
   id: string;
@@ -49,6 +51,8 @@ export type ChatMessage = {
   retrieval?: RetrievalHit[];
   mode?: ChatMode;
   refused?: boolean;
+  toolTrace?: ToolTraceEntry[];
+  planner?: string;
 };
 
 export type ChatRequest = {
@@ -61,4 +65,10 @@ export type ChatResponse = {
   retrieval: RetrievalHit[];
   mode: ChatMode;
   refused: boolean;
+};
+
+export type AgentApiResponse = ChatResponse & {
+  toolTrace: ToolTraceEntry[];
+  planner: string;
+  steps: number;
 };

@@ -15,7 +15,7 @@ const STEPS = [
   {
     n: "03",
     title: "Act with audit trail",
-    body: "Premium agents create tickets, append CSV sheets, and POST webhooks — always from grounded context.",
+    body: "Premium’s tool-calling agent multi-steps: search docs, create tickets, notify the team, log gaps — with a visible tool trace.",
   },
 ];
 
@@ -41,8 +41,8 @@ const FEATURES = [
     body: "Fixed cases with pass/fail report. Run via npm run eval or Admin → Eval.",
   },
   {
-    title: "Agent actions",
-    body: "Create support tickets, log to CSV sheet, call WEBHOOK_URL — Premium audit trail in Admin.",
+    title: "Autonomous support agent",
+    body: "Full tool-calling loop (Ollama-first): search · ticket · escalate · CRM note · notify · knowledge gaps + manual fallback.",
   },
 ];
 
@@ -67,8 +67,9 @@ export default function LandingPage() {
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
             CiteQA is a privacy-first RAG chatbot with citations, private Ollama
-            generation, document upload, an eval suite, and Premium agent actions
-            (tickets · sheet log · webhook) with an admin audit trail.
+            generation, document upload, an eval suite, and a Premium{" "}
+            <strong className="font-semibold text-violet-700">tool-calling support agent</strong>{" "}
+            (multi-step tools + admin audit trail).
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -208,7 +209,7 @@ export default function LandingPage() {
               60-second Fiverr demo path
             </h2>
             <p className="mt-1 text-sm text-indigo-100">
-              Landing → Live demo (ask refunds) → Agent ticket → Admin log → Eval
+              Landing → Agent demo (refund + ticket + notify) → Tool trace → Admin
             </p>
           </div>
           <Link

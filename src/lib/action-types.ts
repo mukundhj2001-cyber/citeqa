@@ -7,6 +7,9 @@ export type TicketCitation = {
   score?: number;
 };
 
+export type TicketStatus = "open" | "pending" | "closed" | "escalated";
+export type TicketPriority = "normal" | "high";
+
 export type Ticket = {
   id: string;
   subject: string;
@@ -14,7 +17,8 @@ export type Ticket = {
   question: string;
   answerSummary: string;
   citations: TicketCitation[];
-  status: "open" | "pending" | "closed";
+  status: TicketStatus;
+  priority: TicketPriority;
   createdAt: string;
   updatedAt: string;
 };
@@ -25,4 +29,20 @@ export type ActionLogEntry = {
   action: string;
   result: string;
   detail: string;
+};
+
+/** One step in the autonomous support agent's tool loop (UI transparency). */
+export type ToolTraceEntry = {
+  name: string;
+  args: Record<string, unknown>;
+  result: unknown;
+  ok: boolean;
+  ms?: number;
+};
+
+export type KnowledgeGap = {
+  id: string;
+  topic: string;
+  question: string;
+  createdAt: string;
 };

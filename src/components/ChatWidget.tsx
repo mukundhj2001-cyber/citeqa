@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ChatMessage, Citation, ChatResponse } from "@/lib/types";
+import type { ChatMessage, Citation } from "@/lib/types";
 import type { PackageId } from "@/lib/packages";
 import { getPackage } from "@/lib/packages";
 import DocsPanel from "@/components/DocsPanel";
 import AgentPanel from "@/components/AgentPanel";
 
 const STARTERS = [
-  "How do refunds work?",
-  "What’s on Pro?",
+  "What’s the refund policy?",
+  "I want a refund, create a ticket and notify the team",
+  "What’s your HIPAA SLA?",
   "How do I reset my password?",
-  "How do I install the tracking snippet?",
-  "Do you offer SSO?",
+  "What’s on Pro?",
 ];
 
 function uid() {
@@ -42,6 +42,7 @@ export default function ChatWidget({
   const [error, setError] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
   const [showRetrieval, setShowRetrieval] = useState(true);
+  const [agentMode, setAgentMode] = useState(packageId === "premium");
   const [sideTab, setSideTab] = useState<"sources" | "docs">("sources");
   const [indexInfo, setIndexInfo] = useState<string>("Indexing…");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -62,6 +63,13 @@ export default function ChatWidget({
       .catch(() => setIndexInfo("Index ready on first question"));
   }, []);
 
+
+  useEffect(() => {
+    // Premium defaults to Agent mode; Basic/Standard force classic chat.
+    if (packageId === "premium") setAgentMode(true);
+    else setAgentMode(false);
+  }, [packageId]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -76,7 +84,8 @@ export default function ChatWidget({
       setMessages((m) => [...m, userMsg]);
       setLoading(true);
       try {
-        const res = await fetch("/api/chat", {
+        const useAgent = agentMode && pkg.includesAgent;
+        const res = await fetch(useAgent ? "/api/agent" : "/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message }),
@@ -85,7 +94,7 @@ export default function ChatWidget({
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || `Request failed (${res.status})`);
         }
-        const data: ChatResponse = await res.json();
+        const data = await res.json();
         const assistant: ChatMessage = {
           id: uid(),
           role: "assistant",
@@ -94,6 +103,8 @@ export default function ChatWidget({
           retrieval: data.retrieval,
           mode: data.mode,
           refused: data.refused,
+          toolTrace: data.toolTrace,
+          planner: data.planner,
         };
         setMessages((m) => [...m, assistant]);
         if (data.citations?.[0]) setActiveCitation(data.citations[0]);
@@ -105,7 +116,7 @@ export default function ChatWidget({
         inputRef.current?.focus();
       }
     },
-    [loading]
+    [loading, agentMode, pkg.includesAgent]
   );
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -216,6 +227,41 @@ export default function ChatWidget({
             Manage uploads & re-index
           </button>
 
+          {pkg.includesAgent && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Mode
+              </span>
+              <button
+                type="button"
+                onClick={() => setAgentMode(true)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  agentMode
+                    ? "bg-violet-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Agent
+              </button>
+              <button
+                type="button"
+                onClick={() => setAgentMode(false)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  !agentMode
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Classic chat
+              </button>
+              <span className="text-[10px] text-slate-400">
+                {agentMode
+                  ? "Calls /api/agent · multi-step tools"
+                  : "Calls /api/chat · manual actions only"}
+              </span>
+            </div>
+          )}
+
           {onPackageChange && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -249,6 +295,9 @@ export default function ChatWidget({
               answer={lastAssistant?.content ?? ""}
               citations={lastAssistant?.citations ?? []}
               refused={lastAssistant?.refused}
+              toolTrace={lastAssistant?.toolTrace}
+              planner={lastAssistant?.planner}
+              agentMode={agentMode}
             />
           </div>
         </div>
@@ -480,13 +529,15 @@ function MessageBubble({
         <div className="whitespace-pre-wrap">{renderContent(message.content)}</div>
         {!isUser && message.mode && (
           <div className="mt-2 text-[10px] uppercase tracking-wide opacity-60">
-            {message.mode === "ollama"
-              ? "Ollama (local) + citations"
-              : message.mode === "openai"
-                ? "OpenAI + citations"
-                : message.mode === "refuse"
-                  ? "Refused · not in docs"
-                  : "Offline retrieval quotes"}
+            {message.mode === "agent"
+              ? "Agent + tools + citations"
+              : message.mode === "ollama"
+                ? "Ollama (local) + citations"
+                : message.mode === "openai"
+                  ? "OpenAI + citations"
+                  : message.mode === "refuse"
+                    ? "Refused · not in docs"
+                    : "Offline retrieval quotes"}
           </div>
         )}
         {!isUser && message.citations && message.citations.length > 0 && (

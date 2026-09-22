@@ -253,9 +253,22 @@ export default function AdminPage() {
                           {t.subject}
                         </h3>
                       </div>
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-                        {t.status}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                            t.status === "escalated"
+                              ? "bg-amber-50 text-amber-800"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                        {t.priority === "high" && (
+                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">
+                            high
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="mt-2 text-xs text-slate-500">
                       {formatWhen(t.createdAt)}

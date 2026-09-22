@@ -5,14 +5,22 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import type { Ticket, TicketCitation, ActionLogEntry } from "@/lib/action-types";
+import type {
+  Ticket,
+  TicketCitation,
+  TicketPriority,
+  TicketStatus,
+  ActionLogEntry,
+  KnowledgeGap,
+} from "@/lib/action-types";
 
-export type { Ticket, TicketCitation, ActionLogEntry };
+export type { Ticket, TicketCitation, ActionLogEntry, KnowledgeGap };
 
 const DATA_DIR = resolve(process.cwd(), "data");
 const TICKETS_PATH = resolve(DATA_DIR, "tickets.json");
 const LOG_PATH = resolve(DATA_DIR, "action-log.csv");
 const LAST_EVAL_PATH = resolve(DATA_DIR, "last-eval.json");
+const GAPS_PATH = resolve(DATA_DIR, "knowledge-gaps.json");
 
 function ensureDataDir() {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
@@ -32,17 +40,39 @@ function ensureLogFile() {
   }
 }
 
+function ensureGapsFile() {
+  ensureDataDir();
+  if (!existsSync(GAPS_PATH)) {
+    writeFileSync(GAPS_PATH, "[]\n", "utf8");
+  }
+}
+
 function csvEscape(s: string): string {
   const t = (s ?? "").replace(/\r?\n/g, " ").trim();
   if (/[",]/.test(t)) return `"${t.replace(/"/g, '""')}"`;
   return t;
 }
 
+function normalizeTicket(raw: Partial<Ticket> & { id: string }): Ticket {
+  return {
+    id: raw.id,
+    subject: raw.subject ?? "",
+    body: raw.body ?? "",
+    question: raw.question ?? "",
+    answerSummary: raw.answerSummary ?? "",
+    citations: Array.isArray(raw.citations) ? raw.citations : [],
+    status: (raw.status as TicketStatus) || "open",
+    priority: (raw.priority as TicketPriority) || "normal",
+    createdAt: raw.createdAt ?? new Date().toISOString(),
+    updatedAt: raw.updatedAt ?? raw.createdAt ?? new Date().toISOString(),
+  };
+}
+
 export function listTickets(): Ticket[] {
   ensureTicketsFile();
   try {
-    const raw = JSON.parse(readFileSync(TICKETS_PATH, "utf8")) as Ticket[];
-    return Array.isArray(raw) ? raw : [];
+    const raw = JSON.parse(readFileSync(TICKETS_PATH, "utf8")) as Partial<Ticket>[];
+    return Array.isArray(raw) ? raw.map((t) => normalizeTicket(t as Ticket)) : [];
   } catch {
     return [];
   }
@@ -53,12 +83,18 @@ export function saveTickets(tickets: Ticket[]) {
   writeFileSync(TICKETS_PATH, JSON.stringify(tickets, null, 2) + "\n", "utf8");
 }
 
+export function getTicket(id: string): Ticket | null {
+  return listTickets().find((t) => t.id === id) ?? null;
+}
+
 export function createTicket(input: {
   subject: string;
   body: string;
   question: string;
   answerSummary: string;
   citations: TicketCitation[];
+  status?: TicketStatus;
+  priority?: TicketPriority;
 }): Ticket {
   const now = new Date().toISOString();
   const ticket: Ticket = {
@@ -68,7 +104,8 @@ export function createTicket(input: {
     question: input.question.slice(0, 2000),
     answerSummary: input.answerSummary.slice(0, 2000),
     citations: input.citations.slice(0, 8),
-    status: "open",
+    status: input.status ?? "open",
+    priority: input.priority ?? "normal",
     createdAt: now,
     updatedAt: now,
   };
@@ -76,6 +113,48 @@ export function createTicket(input: {
   tickets.unshift(ticket);
   saveTickets(tickets);
   return ticket;
+}
+
+export function updateTicket(
+  id: string,
+  patch: Partial<Pick<Ticket, "subject" | "body" | "answerSummary" | "status" | "priority" | "citations">>
+): Ticket | null {
+  const tickets = listTickets();
+  const idx = tickets.findIndex((t) => t.id === id);
+  if (idx < 0) return null;
+  const now = new Date().toISOString();
+  tickets[idx] = {
+    ...tickets[idx],
+    ...patch,
+    updatedAt: now,
+  };
+  saveTickets(tickets);
+  return tickets[idx];
+}
+
+/** Create a new escalated ticket, or upgrade an existing one by id. */
+export function escalateTicket(input: {
+  ticketId?: string;
+  subject: string;
+  body: string;
+  question: string;
+  answerSummary: string;
+  citations: TicketCitation[];
+}): Ticket {
+  if (input.ticketId) {
+    const updated = updateTicket(input.ticketId, {
+      status: "escalated",
+      priority: "high",
+      answerSummary: input.answerSummary.slice(0, 2000),
+      citations: input.citations.slice(0, 8),
+    });
+    if (updated) return updated;
+  }
+  return createTicket({
+    ...input,
+    status: "escalated",
+    priority: "high",
+  });
 }
 
 export function appendActionLog(entry: Omit<ActionLogEntry, "timestamp"> & { timestamp?: string }) {
@@ -142,6 +221,30 @@ function parseCsvLine(line: string): string[] {
   return out;
 }
 
+export function listKnowledgeGaps(): KnowledgeGap[] {
+  ensureGapsFile();
+  try {
+    const raw = JSON.parse(readFileSync(GAPS_PATH, "utf8")) as KnowledgeGap[];
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordKnowledgeGap(input: { topic: string; question: string }): KnowledgeGap {
+  ensureGapsFile();
+  const gap: KnowledgeGap = {
+    id: `gap_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    topic: input.topic.slice(0, 200),
+    question: input.question.slice(0, 2000),
+    createdAt: new Date().toISOString(),
+  };
+  const gaps = listKnowledgeGaps();
+  gaps.unshift(gap);
+  writeFileSync(GAPS_PATH, JSON.stringify(gaps.slice(0, 500), null, 2) + "\n", "utf8");
+  return gap;
+}
+
 export function saveLastEval(summary: unknown) {
   ensureDataDir();
   writeFileSync(LAST_EVAL_PATH, JSON.stringify(summary, null, 2) + "\n", "utf8");
@@ -161,7 +264,7 @@ export function dataPaths() {
     tickets: TICKETS_PATH,
     log: LOG_PATH,
     lastEval: LAST_EVAL_PATH,
+    gaps: GAPS_PATH,
     dir: DATA_DIR,
   };
 }
-
