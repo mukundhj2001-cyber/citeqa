@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Nav from "@/components/Nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CiteQA — Support answers grounded in your docs",
+  title: "CiteQA — Premium private RAG + agent actions",
   description:
-    "Portfolio demo: customer-support knowledge chatbot with RAG and citations for Northstar Analytics.",
+    "End-to-end product demo: privacy-first support chatbot with citations, Ollama, uploads, eval suite, and Premium agent actions (tickets · sheet · webhook).",
 };
 
 export default function RootLayout({
@@ -28,7 +29,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col bg-slate-50 text-slate-900">
+        <Nav />
+        {children}
+      </body>
     </html>
   );
 }

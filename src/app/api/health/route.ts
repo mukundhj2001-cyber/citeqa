@@ -24,5 +24,7 @@ export async function GET() {
     ollamaModel: gen.ollamaModel,
     indexOnDisk: Boolean(manifest),
     indexCreatedAt: manifest?.createdAt ?? null,
+    adminPasswordRequired: Boolean(process.env.ADMIN_DEMO_PASSWORD?.trim()),
+    webhookConfigured: Boolean(process.env.WEBHOOK_URL?.trim()),
   });
 }

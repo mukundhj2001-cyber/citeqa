@@ -50,3 +50,6 @@ knowledge/uploads/*
 !knowledge/uploads/.gitkeep
 # Allow committed empty manifest template if present; live registry is local
 knowledge/uploads/manifest.json
+
+# CiteQA Premium — last in-app eval snapshot
+data/last-eval.json

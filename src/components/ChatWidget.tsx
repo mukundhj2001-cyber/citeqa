@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatMessage, Citation, ChatResponse } from "@/lib/types";
+import type { PackageId } from "@/lib/packages";
+import { getPackage } from "@/lib/packages";
 import DocsPanel from "@/components/DocsPanel";
+import AgentPanel from "@/components/AgentPanel";
 
 const STARTERS = [
   "How do refunds work?",
@@ -21,7 +24,18 @@ function scoreBar(score: number) {
   return pct;
 }
 
-export default function ChatWidget() {
+export default function ChatWidget({
+  packageId = "premium",
+  onPackageChange,
+  compactNav = false,
+}: {
+  packageId?: PackageId;
+  onPackageChange?: (id: PackageId) => void;
+  compactNav?: boolean;
+} = {}) {
+  const pkg = getPackage(packageId);
+  void compactNav;
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,6 +116,11 @@ export default function ChatWidget() {
   };
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastUser =
+    lastAssistant
+      ? [...messages].slice(0, messages.indexOf(lastAssistant)).reverse().find((m) => m.role === "user")
+      : undefined;
+
 
   return (
     <div className="flex h-[min(720px,calc(100vh-8rem))] w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
@@ -116,7 +135,7 @@ export default function ChatWidget() {
             <div className="flex items-center gap-2">
               <h1 className="text-base font-semibold tracking-tight">CiteQA</h1>
               <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                Demo
+                {pkg.name} demo
               </span>
             </div>
             <p className="truncate text-xs text-indigo-100">
@@ -196,6 +215,42 @@ export default function ChatWidget() {
           >
             Manage uploads & re-index
           </button>
+
+          {onPackageChange && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Package
+              </span>
+              {(["basic", "standard", "premium"] as PackageId[]).map((id) => {
+                const p = getPackage(id);
+                const active = packageId === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onPackageChange(id)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                      active
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className={`mt-3 ${pkg.includesAgent ? "" : "opacity-70"}`}>
+            <AgentPanel
+              packageId={packageId}
+              question={lastUser?.content ?? ""}
+              answer={lastAssistant?.content ?? ""}
+              citations={lastAssistant?.citations ?? []}
+              refused={lastAssistant?.refused}
+            />
+          </div>
         </div>
       </div>
 
