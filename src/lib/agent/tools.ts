@@ -233,9 +233,9 @@ function toolCreateTicket(
 
   appendActionLog({
     question,
-    action: "create_ticket",
-    result: "ok",
-    detail: `ticket=${ticket.id} status=${ticket.status} via=agent`,
+    action: "Create support ticket",
+    result: "Success",
+    detail: `Opened a support ticket and marked it open. Created by the agent.`,
   });
 
   return { ok: true, result: { ticketId: ticket.id, status: ticket.status } };
@@ -279,9 +279,9 @@ function toolEscalate(
 
   appendActionLog({
     question,
-    action: "escalate_ticket",
-    result: "ok",
-    detail: `ticket=${ticket.id} status=${ticket.status} priority=${ticket.priority} via=agent`,
+    action: "Escalate ticket",
+    result: "Success",
+    detail: `Escalated the ticket to high priority so a human can follow up. Created by the agent.`,
   });
 
   return {
@@ -306,8 +306,8 @@ function toolLogCrm(
 
   const entry = appendActionLog({
     question,
-    action: "log_crm_note",
-    result: "ok",
+    action: "Log CRM note",
+    result: "Success",
     detail: note.slice(0, 500),
   });
 
@@ -337,8 +337,9 @@ async function toolNotifyTeam(
   };
 
   const webhookUrl = process.env.WEBHOOK_URL?.trim();
-  let result = "simulated";
-  let detail = "WEBHOOK_URL not set — logged locally only";
+  let result = "Saved locally only";
+  let detail =
+    "No team webhook is configured, so the alert was saved in the local action log only.";
   let statusCode: number | null = null;
 
   if (webhookUrl) {
@@ -350,23 +351,27 @@ async function toolNotifyTeam(
         signal: AbortSignal.timeout(8000),
       });
       statusCode = res.status;
-      result = res.ok ? "ok" : "http_error";
-      detail = `POST ${webhookUrl} → ${res.status}`;
+      result = res.ok ? "Success" : "Failed";
+      detail = res.ok
+        ? `Team alert sent successfully (HTTP ${res.status}).`
+        : `Team alert failed (HTTP ${res.status}).`;
     } catch (e) {
-      result = "network_error";
-      detail = e instanceof Error ? e.message : "webhook failed";
+      result = "Failed";
+      detail = e instanceof Error
+        ? `Team alert could not be sent: ${e.message}`
+        : "Team alert could not be sent.";
     }
   }
 
   appendActionLog({
     question,
-    action: "notify_team",
+    action: "Notify team",
     result,
-    detail: `${detail} | ${message.slice(0, 200)}`,
+    detail: `${detail} Message: ${message.slice(0, 200)}`,
   });
 
   return {
-    ok: result === "ok" || result === "simulated",
+    ok: result === "Success" || result === "Saved locally only",
     result: { result, detail, statusCode, simulated: !webhookUrl },
   };
 }
@@ -384,9 +389,9 @@ function toolKnowledgeGap(
   const gap = recordKnowledgeGap({ topic, question });
   appendActionLog({
     question,
-    action: "record_knowledge_gap",
-    result: "ok",
-    detail: `gap=${gap.id} topic=${gap.topic}`,
+    action: "Record knowledge gap",
+    result: "Success",
+    detail: `Logged a missing documentation topic for the content team: ${gap.topic}.`,
   });
 
   return { ok: true, result: { gapId: gap.id, topic: gap.topic } };

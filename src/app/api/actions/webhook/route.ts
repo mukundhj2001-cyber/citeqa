@@ -24,8 +24,9 @@ export async function POST(req: Request) {
     };
 
     const webhookUrl = process.env.WEBHOOK_URL?.trim();
-    let result = "simulated";
-    let detail = "WEBHOOK_URL not set — logged locally only";
+    let result = "Saved locally only";
+    let detail =
+      "No team webhook is configured, so the alert was saved in the local action log only.";
     let statusCode: number | null = null;
 
     if (webhookUrl) {
@@ -37,23 +38,27 @@ export async function POST(req: Request) {
           signal: AbortSignal.timeout(8000),
         });
         statusCode = res.status;
-        result = res.ok ? "ok" : "http_error";
-        detail = `POST ${webhookUrl} → ${res.status}`;
+        result = res.ok ? "Success" : "Failed";
+        detail = res.ok
+          ? `Team alert sent successfully (HTTP ${res.status}).`
+          : `Team alert failed (HTTP ${res.status}).`;
       } catch (e) {
-        result = "network_error";
-        detail = e instanceof Error ? e.message : "webhook failed";
+        result = "Failed";
+        detail = e instanceof Error
+          ? `Team alert could not be sent: ${e.message}`
+          : "Team alert could not be sent.";
       }
     }
 
     appendActionLog({
       question,
-      action: "webhook",
+      action: "Send webhook",
       result,
       detail,
     });
 
     return NextResponse.json({
-      ok: result === "ok" || result === "simulated",
+      ok: result === "Success" || result === "Saved locally only",
       result,
       detail,
       statusCode,

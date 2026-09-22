@@ -26,9 +26,13 @@ export async function POST(req: Request) {
 
     const entry = appendActionLog({
       question,
-      action: "log_to_sheet",
-      result: "ok",
-      detail: note || `answer_len=${answer.length}`,
+      action: "Log to sheet",
+      result: "Success",
+      detail:
+        note ||
+        (answer
+          ? "Saved a short note from the grounded answer to the sheet log."
+          : "Saved a row to the sheet log."),
     });
 
     return NextResponse.json({

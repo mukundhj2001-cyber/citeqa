@@ -21,9 +21,9 @@ export async function POST() {
     const summary = await runEvalSuite();
     appendActionLog({
       question: "(eval suite)",
-      action: "run_eval",
-      result: summary.ok ? "pass" : "fail",
-      detail: `${summary.passed}/${summary.total} passed`,
+      action: "Run evaluation",
+      result: summary.ok ? "Success" : "Failed",
+      detail: `${summary.passed} of ${summary.total} evaluation checks passed.`,
     });
     return NextResponse.json({ ok: true, summary });
   } catch (err) {

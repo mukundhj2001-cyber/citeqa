@@ -51,9 +51,9 @@ export async function POST(req: Request) {
 
     appendActionLog({
       question,
-      action: "create_ticket",
-      result: "ok",
-      detail: `ticket=${ticket.id} status=${ticket.status}`,
+      action: "Create support ticket",
+      result: "Success",
+      detail: "Opened a support ticket and marked it open.",
     });
 
     return NextResponse.json({
