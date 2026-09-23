@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Northstar Support — Help center assistant",
+  title: "Heliora Support — Help center assistant",
   description:
-    "Northstar Analytics support chat: answers from the help center, related articles, tickets, and team notifications.",
+    "Heliora Analytics support chat: answers from the help center, related articles, tickets, and team notifications.",
 };
 
 export default function RootLayout({

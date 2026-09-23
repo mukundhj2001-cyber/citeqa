@@ -3,7 +3,7 @@ import Link from "next/link";
 const BENEFITS = [
   {
     title: "Answers from your help center",
-    body: "Customers get clear guidance drawn from Northstar’s published articles — not guesses.",
+    body: "Customers get clear guidance drawn from Heliora’s published articles — not guesses.",
   },
   {
     title: "Articles beside every reply",
@@ -40,7 +40,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-violet-200/30 blur-3xl" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
-            Northstar Analytics
+            Heliora Analytics
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             Support that knows your{" "}
@@ -49,7 +49,7 @@ export default function LandingPage() {
             </span>
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Northstar Support is the help assistant for your customers — answers
+            Heliora Support is the help assistant for your customers — answers
             from your docs, related articles in view, and a smooth handoff to your
             team when needed.
           </p>
@@ -135,7 +135,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
-        Northstar Support · Help center assistant
+        Heliora Support · Help center assistant
         <span className="mx-2 text-slate-300">·</span>
         <span className="text-slate-400">Powered by CiteQA</span>
       </footer>

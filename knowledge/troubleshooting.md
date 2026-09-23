@@ -1,16 +1,16 @@
 # Troubleshooting & Account Access
 
-Common fixes for Northstar Analytics issues.
+Common fixes for Heliora Analytics issues.
 
 ## Password reset
 
-1. Go to app.northstar-analytics.example/login
+1. Go to app.heliora-analytics.example/login
 2. Click **Forgot password**
-3. Enter the email on your Northstar account
+3. Enter the email on your Heliora account
 4. Open the reset link (valid for **60 minutes**)
 5. Choose a new password (min 10 characters, at least one number and one symbol)
 
-If you do not receive the email within 10 minutes, check spam/junk and confirm you are using the email tied to the workspace. SSO (Business) users reset passwords through their identity provider, not Northstar.
+If you do not receive the email within 10 minutes, check spam/junk and confirm you are using the email tied to the workspace. SSO (Business) users reset passwords through their identity provider, not Heliora.
 
 ## Locked out after failed logins
 
@@ -20,7 +20,7 @@ After **10 failed password attempts** in 15 minutes, the account is locked for 3
 
 1. Confirm write key under Settings → Project
 2. Disable browser extensions that block analytics scripts
-3. Ensure `northstar.init` runs before `track` calls
+3. Ensure `heliora.init` runs before `track` calls
 4. Check that you are viewing the correct project (top-left switcher)
 5. Allow up to 2 minutes for ingestion delay
 
@@ -45,11 +45,11 @@ Rate limit responses return HTTP 429 with a `Retry-After` header. Pro: 60 req/mi
 
 ## Billing page won’t load
 
-Try an incognito window and disable ad blockers. If invoices fail to download, email billing@northstar-analytics.example with your workspace ID.
+Try an incognito window and disable ad blockers. If invoices fail to download, email billing@heliora-analytics.example with your workspace ID.
 
 ## Data deletion / GDPR request
 
-Workspace admins can delete the workspace under Settings → Privacy → Delete workspace (irreversible after 7-day grace). For a subject access or erasure request for a specific user ID, email privacy@northstar-analytics.example.
+Workspace admins can delete the workspace under Settings → Privacy → Delete workspace (irreversible after 7-day grace). For a subject access or erasure request for a specific user ID, email privacy@heliora-analytics.example.
 
 ## Known limitations
 

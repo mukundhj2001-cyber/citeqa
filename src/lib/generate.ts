@@ -38,7 +38,7 @@ function contextBlock(hits: ScoredChunk[]): string {
     .join("\n\n---\n\n");
 }
 
-const SYSTEM = `You are Northstar Support, a help-center assistant for Northstar Analytics customers.
+const SYSTEM = `You are Heliora Support, a help-center assistant for Heliora Analytics customers.
 
 Write ONLY the final reply the customer should read in the chat widget.
 
@@ -51,7 +51,7 @@ Hard rules:
 - Synthesize ONE clear answer. If articles conflict, prefer the dedicated policy section (e.g. Refunds) and suggest contacting support for edge cases.
 - Do not add a footnote list of [1], [2], [3]… links or URLs. The product UI already shows related articles.
 - You may name an article naturally once (e.g. “According to our Pricing, Billing & Refunds guide…”).
-- If the articles do not cover the question, say so briefly and suggest emailing support@northstar-analytics.example.`;
+- If the articles do not cover the question, say so briefly and suggest emailing support@heliora-analytics.example.`;
 
 /**
  * Detect answers that dump retrieval/tool theater instead of helping the customer.
@@ -61,7 +61,7 @@ export function looksLikeChunkDump(text: string): boolean {
   if (/top\s+\d+\s+chunks?/.test(t)) return true;
   if (/here are the (top\s+)?(\d+\s+)?(chunks?|results|excerpts)/.test(t))
     return true;
-  if (/i searched (the )?(northstar|knowledge|docs|help)/.test(t)) return true;
+  if (/i searched (the )?(heliora|knowledge|docs|help)/.test(t)) return true;
   if (/knowledge base with the query/.test(t)) return true;
   if (/based on (the )?(search|retrieval) results/.test(t) && (text.match(/\[\d+\]/g)?.length ?? 0) >= 3)
     return true;
@@ -125,7 +125,7 @@ export async function generateAnswer(
   if (isWeakRetrieval(hits)) {
     return {
       answer:
-        "I couldn’t find that in the Northstar help center. I can help with billing, refunds, plans, password resets, and getting started.\n\nTry rephrasing, or email support@northstar-analytics.example and we’ll take it from there.",
+        "I couldn’t find that in the Heliora help center. I can help with billing, refunds, plans, password resets, and getting started.\n\nTry rephrasing, or email support@heliora-analytics.example and we’ll take it from there.",
       mode: "refuse",
       refused: true,
     };
@@ -209,11 +209,11 @@ function offlineCompose(question: string, hits: ScoredChunk[]): string {
 
   if (/refund|money[- ]?back/.test(q) && refundHit) {
     return [
-      "Here’s how refunds work at Northstar:",
+      "Here’s how refunds work at Heliora:",
       "",
       "• **Monthly plans:** full refund within **14 days** of the first paid charge if you’ve used 10% or less of your monthly event quota.",
       "• **Annual plans:** prorated refund within **30 days** of purchase. After that, annual plans aren’t refundable except where required by law.",
-      "• **How to request:** email billing@northstar-analytics.example with your workspace ID and reason. Refunds usually post in 5–7 business days to the original payment method.",
+      "• **How to request:** email billing@heliora-analytics.example with your workspace ID and reason. Refunds usually post in 5–7 business days to the original payment method.",
       "",
       "You can cancel anytime under Billing → Cancel subscription; access continues through the paid period.",
       "",
@@ -238,6 +238,6 @@ function offlineCompose(question: string, hits: ScoredChunk[]): string {
     "",
     cleaned + (primary.text.length > 520 ? "…" : ""),
     "",
-    "If you need something more specific, ask a follow-up or email support@northstar-analytics.example.",
+    "If you need something more specific, ask a follow-up or email support@heliora-analytics.example.",
   ].join("\n");
 }

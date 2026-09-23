@@ -16,7 +16,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 }
 
 /**
- * DELETE an uploaded doc. Sample Northstar KB files cannot be deleted.
+ * DELETE an uploaded doc. Sample Heliora KB files cannot be deleted.
  * Re-indexes by default so citations stop appearing.
  */
 export async function DELETE(req: Request, ctx: Ctx) {

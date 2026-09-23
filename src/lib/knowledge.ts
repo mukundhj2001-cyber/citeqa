@@ -23,7 +23,7 @@ function knowledgeDir(): string {
   return path.join(process.cwd(), "knowledge");
 }
 
-/** Sample Northstar markdown docs (committed under knowledge/). */
+/** Sample Heliora markdown docs (committed under knowledge/). */
 export function loadSampleDocs(): RawDoc[] {
   const dir = knowledgeDir();
   const files = Object.keys(DOC_META);

@@ -65,7 +65,7 @@
     "id": "onboarding-tracking",
     "question": "How do I install the tracking snippet?",
     "expectRefuse": false,
-    "mustIncludeAny": ["write key", "snippet", "northstar.init", "Settings"],
+    "mustIncludeAny": ["write key", "snippet", "heliora.init", "Settings"],
     "mustCiteDoc": "Getting Started",
     "mustCiteSection": "tracking"
   },

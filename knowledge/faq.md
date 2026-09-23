@@ -1,22 +1,22 @@
-# Northstar Analytics Help Center & FAQ
+# Heliora Analytics Help Center & FAQ
 
-Welcome to the Northstar Analytics help center. Northstar Analytics is a product analytics SaaS for product and growth teams.
+Welcome to the Heliora Analytics help center. Heliora Analytics is a product analytics SaaS for product and growth teams.
 
-## What is Northstar Analytics?
+## What is Heliora Analytics?
 
-Northstar Analytics helps product teams understand user behavior with event tracking, funnels, retention cohorts, and dashboards. You instrument events from your app, then explore them in the Northstar workspace.
+Heliora Analytics helps product teams understand user behavior with event tracking, funnels, retention cohorts, and dashboards. You instrument events from your app, then explore them in the Heliora workspace.
 
-## Who is Northstar for?
+## Who is Heliora for?
 
-Northstar is built for product managers, growth marketers, data analysts, and founders who need product insights without standing up a full data warehouse team.
+Heliora is built for product managers, growth marketers, data analysts, and founders who need product insights without standing up a full data warehouse team.
 
 ## How do I contact support?
 
-Email support@northstar-analytics.example Monday–Friday, 9:00–18:00 US Eastern. Pro and Business plans include chat support with a target first response under 4 business hours. Free plan users receive email support with a target under 1 business day.
+Email support@heliora-analytics.example Monday–Friday, 9:00–18:00 US Eastern. Pro and Business plans include chat support with a target first response under 4 business hours. Free plan users receive email support with a target under 1 business day.
 
 ## Where can I find status and uptime?
 
-Check status.northstar-analytics.example for incidents and maintenance. We publish a monthly uptime summary in the Billing → Plan details page for Pro and Business customers.
+Check status.heliora-analytics.example for incidents and maintenance. We publish a monthly uptime summary in the Billing → Plan details page for Pro and Business customers.
 
 ## Can I export my data?
 
@@ -28,11 +28,11 @@ Yes. REST API access is included on Pro and Business. Rate limits: Pro 60 reques
 
 ## Do you offer SSO?
 
-Single Sign-On (SAML) is available on the Business plan only. Contact your account manager or email sales@northstar-analytics.example to enable SSO.
+Single Sign-On (SAML) is available on the Business plan only. Contact your account manager or email sales@heliora-analytics.example to enable SSO.
 
 ## What browsers are supported?
 
-Northstar supports the latest two major versions of Chrome, Firefox, Edge, and Safari. Internet Explorer is not supported.
+Heliora supports the latest two major versions of Chrome, Firefox, Edge, and Safari. Internet Explorer is not supported.
 
 ## How is my data secured?
 

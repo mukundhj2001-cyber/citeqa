@@ -287,7 +287,7 @@ export default function DocsPanel({
         {/* Sample KB */}
         <section>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Sample Northstar KB ({samples.length})
+            Sample Heliora KB ({samples.length})
           </h3>
           <ul className="space-y-1.5">
             {samples.map((d) => (
