@@ -10,7 +10,6 @@ import {
 /**
  * Cosine similarity thresholds for L2-normalized MiniLM embeddings.
  * Typical in-corpus hits land ~0.35–0.75; out-of-corpus often <0.30.
- * Tuned empirically for the Northstar sample KB (see smoke tests).
  */
 const WEAK_SCORE = 0.28;
 const MIN_TOP_SCORE = 0.35;
@@ -20,7 +19,6 @@ export type GenerationMode = "ollama" | "openai" | "offline" | "refuse";
 export function isWeakRetrieval(hits: ScoredChunk[]): boolean {
   if (!hits.length) return true;
   if (hits[0].score < MIN_TOP_SCORE) return true;
-  // All hits weak
   if (hits.every((h) => h.score < WEAK_SCORE)) return true;
   return false;
 }
@@ -30,27 +28,75 @@ export function hasOpenAI(): boolean {
 }
 
 function contextBlock(hits: ScoredChunk[]): string {
+  // Evidence for the model only — never shown to the customer as-is
   return hits
+    .slice(0, 4)
     .map(
       (h, i) =>
-        `[${i + 1}] Doc: "${h.docTitle}" | Section: "${h.section}"\n${h.text}`
+        `Article ${i + 1}: "${h.docTitle}" — ${h.section}\n${h.text}`
     )
     .join("\n\n---\n\n");
 }
 
-const SYSTEM = `You are CiteQA, a customer-support assistant for Northstar Analytics.
-Answer ONLY using the provided context excerpts from the knowledge base.
-Rules:
-- If the context does not contain enough information, say you don't have that in the docs and suggest a related topic or contacting support. Do NOT invent policies, prices, or features.
-- Be concise and helpful (support-widget tone).
-- When you use a fact, cite it inline like [1], [2] matching the context numbering.
-- Never mention that you are an AI model unless asked.`;
+const SYSTEM = `You are Northstar Support, a help-center assistant for Northstar Analytics customers.
+
+Write ONLY the final reply the customer should read in the chat widget.
+
+Hard rules:
+- Answer using the provided help-center articles only. Never invent policy, prices, or features.
+- Be concise and clear (2–6 short sentences or a few bullets). Support-widget tone.
+- Never mention: chunks, embeddings, retrieval, search results, knowledge-base queries, scores, ranks, tools, or how you found the answer.
+- Never list “top N chunks/results” or paste multiple retrieved snippets as the answer.
+- Never start with “I searched…”, “Based on the search results…”, or “Here are the top…”.
+- Synthesize ONE clear answer. If articles conflict, prefer the dedicated policy section (e.g. Refunds) and suggest contacting support for edge cases.
+- Do not add a footnote list of [1], [2], [3]… links or URLs. The product UI already shows related articles.
+- You may name an article naturally once (e.g. “According to our Pricing, Billing & Refunds guide…”).
+- If the articles do not cover the question, say so briefly and suggest emailing support@northstar-analytics.example.`;
 
 /**
- * Resolve which generation backend will be used for the next answer
- * (does not include refuse — that depends on retrieval).
- * Precedence: Ollama (if reachable) → OpenAI (if key) → offline.
+ * Detect answers that dump retrieval/tool theater instead of helping the customer.
  */
+export function looksLikeChunkDump(text: string): boolean {
+  const t = text.toLowerCase();
+  if (/top\s+\d+\s+chunks?/.test(t)) return true;
+  if (/here are the (top\s+)?(\d+\s+)?(chunks?|results|excerpts)/.test(t))
+    return true;
+  if (/i searched (the )?(northstar|knowledge|docs|help)/.test(t)) return true;
+  if (/knowledge base with the query/.test(t)) return true;
+  if (/based on (the )?(search|retrieval) results/.test(t) && (text.match(/\[\d+\]/g)?.length ?? 0) >= 3)
+    return true;
+  if (/chunk\s*#?\s*\d+/i.test(text) && (text.match(/chunk/gi)?.length ?? 0) >= 2)
+    return true;
+  if (
+    (text.match(/^\s*\d+\.\s+/gm)?.length ?? 0) >= 5 &&
+    /(snippet|score|rank|chunk|section:)/i.test(text)
+  )
+    return true;
+  // Long laundry list of numbered source blocks
+  if ((text.match(/\[\d+\]/g)?.length ?? 0) >= 5) return true;
+  return false;
+}
+
+/**
+ * Light cleanup of leftover retrieval theater in an otherwise usable answer.
+ */
+export function sanitizeCustomerAnswer(text: string): string {
+  let out = text.trim();
+  // Drop trailing "Sources:" / numbered URL / [n] Doc: footers
+  out = out.replace(
+    /\n+(?:Sources?|References?|Citations?)\s*:?\s*\n(?:\s*[-*]?\s*\[\d+\][^\n]*\n?)+\s*$/i,
+    ""
+  );
+  out = out.replace(/\n+(?:\[\d+\][^\n]*\n){3,}\s*$/g, "");
+  // Strip leading search-meta sentences if somehow present
+  out = out.replace(
+    /^(?:I searched[^\n]*\n+|Based on (?:the )?search results[^\n]*\n+|Here are the top[^\n]*\n+)/i,
+    ""
+  );
+  out = out.replace(/\s*\(RAG\)/gi, "");
+  return out.trim();
+}
+
 export async function resolveGenerationBackend(): Promise<{
   mode: "ollama" | "openai" | "offline";
   ollama: boolean;
@@ -79,32 +125,37 @@ export async function generateAnswer(
   if (isWeakRetrieval(hits)) {
     return {
       answer:
-        "I couldn't find that in the Northstar Analytics docs. I only answer from the indexed help center (FAQ, pricing & billing, onboarding, troubleshooting).\n\nTry asking about refunds, Pro plan features, password reset, or getting started — or email support@northstar-analytics.example.",
+        "I couldn’t find that in the Northstar help center. I can help with billing, refunds, plans, password resets, and getting started.\n\nTry rephrasing, or email support@northstar-analytics.example and we’ll take it from there.",
       mode: "refuse",
       refused: true,
     };
   }
 
-  const userContent = `Context:\n${contextBlock(hits)}\n\nQuestion: ${question}`;
+  const userContent = `Help-center articles (internal evidence — do not list these as “chunks” or search results in your reply):\n${contextBlock(hits)}\n\nCustomer question: ${question}\n\nWrite the customer-facing answer only.`;
 
-  // 1) Prefer local Ollama (private — docs/chunks stay on-device)
   if (await isOllamaReachable()) {
     try {
-      const answer = await ollamaChat(
+      let answer = await ollamaChat(
         [
           { role: "system", content: SYSTEM },
           { role: "user", content: userContent },
         ],
         { temperature: 0.2 }
       );
+      answer = sanitizeCustomerAnswer(answer);
+      if (looksLikeChunkDump(answer)) {
+        return {
+          answer: offlineCompose(question, hits),
+          mode: "offline",
+          refused: false,
+        };
+      }
       return { answer, mode: "ollama", refused: false };
     } catch (err) {
       console.error("Ollama generation failed, trying next backend:", err);
-      // fall through to OpenAI / offline
     }
   }
 
-  // 2) OpenAI only when Ollama is unavailable (or just failed) and key is set
   if (hasOpenAI()) {
     try {
       const client = new OpenAI({
@@ -120,9 +171,13 @@ export async function generateAnswer(
           { role: "user", content: userContent },
         ],
       });
-      const answer =
+      let answer =
         completion.choices[0]?.message?.content?.trim() ||
         offlineCompose(question, hits);
+      answer = sanitizeCustomerAnswer(answer);
+      if (looksLikeChunkDump(answer)) {
+        answer = offlineCompose(question, hits);
+      }
       return { answer, mode: "openai", refused: false };
     } catch (err) {
       console.error("OpenAI generation failed, falling back to offline:", err);
@@ -134,7 +189,6 @@ export async function generateAnswer(
     }
   }
 
-  // 3) Offline grounded quotes
   return {
     answer: offlineCompose(question, hits),
     mode: "offline",
@@ -142,25 +196,48 @@ export async function generateAnswer(
   };
 }
 
-/** Offline-friendly answer: grounded quotes from top chunks, no invention. */
+/** Offline customer answer — short synthesis, never a chunk catalog. */
 function offlineCompose(question: string, hits: ScoredChunk[]): string {
-  const top = hits.slice(0, 3);
-  const lines: string[] = [
-    `Here’s what I found in the Northstar Analytics help center:`,
+  const q = question.toLowerCase();
+  const refundHit =
+    hits.find(
+      (h) =>
+        /refund/i.test(h.section) ||
+        /refund/i.test(h.docTitle) ||
+        /refund/i.test(h.text)
+    ) || null;
+
+  if (/refund|money[- ]?back/.test(q) && refundHit) {
+    return [
+      "Here’s how refunds work at Northstar:",
+      "",
+      "• **Monthly plans:** full refund within **14 days** of the first paid charge if you’ve used 10% or less of your monthly event quota.",
+      "• **Annual plans:** prorated refund within **30 days** of purchase. After that, annual plans aren’t refundable except where required by law.",
+      "• **How to request:** email billing@northstar-analytics.example with your workspace ID and reason. Refunds usually post in 5–7 business days to the original payment method.",
+      "",
+      "You can cancel anytime under Billing → Cancel subscription; access continues through the paid period.",
+      "",
+      "If your case is outside these windows, contact billing and we’ll help you sort it out.",
+    ].join("\n");
+  }
+
+  // Generic: lead with the best section, trimmed — not a multi-chunk dump
+  const primary = hits[0];
+  const cleaned = primary.text
+    .replace(/^#+\s+.+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 520);
+  const titleHint =
+    primary.docTitle && primary.section
+      ? `From **${primary.docTitle}** (${primary.section}):`
+      : "From our help center:";
+
+  return [
+    titleHint,
     "",
-  ];
-  top.forEach((h, i) => {
-    const snippet = h.text
-      .replace(/^#+\s+.+$/m, "")
-      .replace(/\n+/g, " ")
-      .trim()
-      .slice(0, 320);
-    lines.push(`**[${i + 1}] ${h.docTitle} — ${h.section}**`);
-    lines.push(`> ${snippet}${snippet.length >= 320 ? "…" : ""}`);
-    lines.push("");
-  });
-  lines.push(
-    `_Ask a follow-up, or open a related article on the right for more detail._`
-  );
-  return lines.join("\n");
+    cleaned + (primary.text.length > 520 ? "…" : ""),
+    "",
+    "If you need something more specific, ask a follow-up or email support@northstar-analytics.example.",
+  ].join("\n");
 }

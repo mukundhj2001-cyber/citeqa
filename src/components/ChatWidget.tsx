@@ -124,16 +124,18 @@ export default function ChatWidget({
           .find((m) => m.role === "user")
       : undefined;
 
-  const relatedArticles: Citation[] = lastAssistant?.citations?.length
-    ? lastAssistant.citations
-    : (lastAssistant?.retrieval || []).slice(0, 5).map((r) => ({
+  const relatedArticles: Citation[] = (
+    lastAssistant?.citations?.length
+      ? lastAssistant.citations
+      : (lastAssistant?.retrieval || []).map((r) => ({
         chunkId: r.id,
         docTitle: r.docTitle,
         section: r.section,
         snippet: r.snippet,
         score: r.score,
         rank: r.rank,
-      }));
+      }))
+  ).slice(0, 3);
 
   const hasActions =
     useAgent &&
@@ -478,7 +480,7 @@ function MessageBubble({
                 From the help center
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {message.citations.map((c) => (
+                {message.citations.slice(0, 3).map((c) => (
                   <button
                     key={c.chunkId}
                     type="button"

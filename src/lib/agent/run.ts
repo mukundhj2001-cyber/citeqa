@@ -7,7 +7,12 @@
  *
  * No LangChain — custom loop keeps deps light and behavior transparent.
  */
-import { generateAnswer, isWeakRetrieval, hasOpenAI } from "@/lib/generate";
+import {
+  generateAnswer,
+  isWeakRetrieval,
+  hasOpenAI,
+  sanitizeCustomerAnswer,
+} from "@/lib/generate";
 import {
   getOllamaModel,
   isOllamaReachable,
@@ -29,15 +34,17 @@ import OpenAI from "openai";
 const MAX_STEPS = 6;
 const AGENT_TIMEOUT_MS = 90_000;
 
-const SYSTEM_PROMPT = `You are Northstar Support, the help-center assistant for Northstar Analytics.
-You have tools. Use them to help the customer.
+const SYSTEM_PROMPT = `You are Northstar Support, the help-center assistant for Northstar Analytics customers.
+You have internal tools. Use them, then write ONLY the final customer-facing reply.
 
 Rules:
 1. ALWAYS call search_docs before answering any factual / policy question. Never invent policy.
 2. If search is weak (weak=true or low scores), call record_knowledge_gap and politely refuse — do not invent answers.
-3. When the user asks to create a ticket, refund request follow-up, or notify the team, call the matching tools (create_ticket, notify_team, escalate_ticket, log_crm_note) after searching.
-4. After tools finish, respond with a concise final answer. Cite sources as [1], [2] matching search ranks when grounded.
-5. Keep answers short and helpful (support-widget tone).`;
+3. When the user asks to create a ticket, request a refund follow-up, or notify the team, call matching tools (create_ticket, notify_team, escalate_ticket, log_crm_note) after searching.
+4. Final reply = short customer answer only (a few sentences or bullets). Never mention tools, chunks, search, retrieval, scores, ranks, or “top results”.
+5. Never paste search_docs output, chunk lists, or numbered snippet dumps into the customer reply.
+6. Do not add [1][2][3]… footnotes or URL lists — the product UI shows related articles.
+7. Keep a warm, clear support-widget tone.`;
 
 function snippetOf(text: string, max = 220): string {
   const cleaned = text.replace(/^#+\s+.+$/m, "").replace(/\s+/g, " ").trim();
@@ -68,7 +75,7 @@ function hitsToRetrieval(hits: ScoredChunk[]): RetrievalHit[] {
 
 function hitsToCitations(hits: ScoredChunk[], weak: boolean): Citation[] {
   if (weak) return [];
-  return hits.slice(0, 4).map((h) => ({
+  return hits.slice(0, 3).map((h) => ({
     chunkId: h.id,
     docTitle: h.docTitle,
     section: h.section,
@@ -188,9 +195,9 @@ async function composeFinalAnswer(
       : "";
     return {
       answer:
-        "I couldn't find that in the Northstar Analytics docs. I only answer from our help center (FAQ, billing, onboarding, troubleshooting)." +
+        "I couldn’t find that in the Northstar help center." +
         gapHint +
-        "\n\nTry asking about refunds, Pro plan features, password reset, or getting started — or email support@northstar-analytics.example.",
+        "\n\nI can help with billing, refunds, plans, password resets, and getting started — or email support@northstar-analytics.example.",
       mode: "refuse",
       refused: true,
     };
@@ -498,9 +505,9 @@ async function runNativeToolLoop(
       continue;
     }
 
-    // Final text response from model
+    // Final text response from model (may still be discarded if it dumps chunks)
     if (response.content) {
-      ctx.lastAnswer = response.content;
+      ctx.lastAnswer = sanitizeCustomerAnswer(response.content);
     }
     break;
   }
@@ -726,16 +733,11 @@ export async function runSupportAgent(message: string): Promise<AgentResult> {
   await ensureIntentActions(message, ctx, toolTrace);
 
   const composed = await composeFinalAnswer(ctx, toolTrace);
-  // Prefer model final text when native tools produced one and not refused
-  const answer =
-    !composed.refused && ctx.lastAnswer && planner !== "heuristic"
-      ? (() => {
-          const actions = toolTrace.filter((t) => t.name !== "search_docs" && t.ok);
-          if (!actions.length) return ctx.lastAnswer;
-          const lines = actions.map((t) => `• ${t.name}`);
-          return `${ctx.lastAnswer}\n\n**Actions taken:**\n${lines.join("\n")}`;
-        })()
-      : composed.answer;
+  // Always use generateAnswer-backed composition for the customer reply.
+  // Native-tool model text often echoes search_docs chunk lists — never show that.
+  void ctx.lastAnswer;
+  void planner;
+  const answer = sanitizeCustomerAnswer(composed.answer);
 
   return {
     answer,

@@ -34,12 +34,12 @@ export const TOOL_DEFINITIONS: Array<{
     function: {
       name: "search_docs",
       description:
-        "Search the Northstar Analytics knowledge base (RAG). Returns top chunks with scores. Always call this before answering factual policy questions.",
+        "Look up Northstar help-center articles for the customer's question. Call this before answering factual or policy questions. Results are for your reasoning only — never paste them as a chunk list in the customer reply.",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string", description: "Search query" },
-          top_k: { type: "integer", description: "Number of chunks (default 6)" },
+          top_k: { type: "integer", description: "How many articles to consider (default 6)" },
         },
         required: ["query"],
       },
@@ -168,7 +168,7 @@ async function toolSearchDocs(
 
   const citations: Citation[] = weak
     ? []
-    : hits.slice(0, 4).map((h) => ({
+    : hits.slice(0, 3).map((h) => ({
         chunkId: h.id,
         docTitle: h.docTitle,
         section: h.section,

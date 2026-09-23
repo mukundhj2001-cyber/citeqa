@@ -14,7 +14,7 @@ export async function answerQuestion(message: string): Promise<ChatResponse> {
   const hits = await store.search(message, 6);
   const { answer, mode, refused } = await generateAnswer(message, hits);
 
-  const used = refused || isWeakRetrieval(hits) ? [] : hits.slice(0, 4);
+  const used = refused || isWeakRetrieval(hits) ? [] : hits.slice(0, 3);
 
   const citations: Citation[] = used.map((h) => ({
     chunkId: h.id,
