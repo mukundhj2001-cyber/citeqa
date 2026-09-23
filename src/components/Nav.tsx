@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const LINKS = [
-  { href: "/", label: "Product" },
-  { href: "/demo", label: "Support chat" },
-  { href: "/admin", label: "Admin" },
+  { href: "/", label: "Home" },
+  { href: "/demo", label: "Help" },
+  { href: "/admin", label: "Operations" },
 ];
 
 export default function Nav() {
@@ -15,23 +15,23 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm shadow-indigo-300/50">
-            CQ
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm shadow-indigo-300/40">
+            NS
           </span>
           <span className="leading-tight">
             <span className="block text-sm font-bold tracking-tight text-slate-900">
-              CiteQA
+              Northstar Support
             </span>
             <span className="hidden text-[10px] text-slate-500 sm:block">
-              Help chat grounded in your docs
+              Help center assistant
             </span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary">
           {LINKS.map((l) => {
             const active =
               l.href === "/"
@@ -55,7 +55,7 @@ export default function Nav() {
             href="/demo"
             className="ml-2 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
           >
-            Try the chat
+            Open chat
           </Link>
         </nav>
 
@@ -88,7 +88,7 @@ export default function Nav() {
               onClick={() => setOpen(false)}
               className="mt-1 rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white"
             >
-              Try the chat
+              Open chat
             </Link>
           </div>
         </div>

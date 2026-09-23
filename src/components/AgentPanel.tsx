@@ -39,14 +39,14 @@ function summarizeResult(entry: ToolTraceEntry): string {
   if (typeof r.error === "string") return r.error;
   if (entry.name === "search_docs") {
     const n = Array.isArray(r.chunks) ? r.chunks.length : 0;
-    return r.weak ? "Limited match in help center" : `Found ${n} related section${n === 1 ? "" : "s"}`;
+    return r.weak
+      ? "Limited match in help center"
+      : `Found ${n} related section${n === 1 ? "" : "s"}`;
   }
   if (entry.name === "create_ticket" || entry.name === "escalate_ticket") {
     return r.ticketId ? `Ticket ${r.ticketId}` : "Ticket updated";
   }
-  if (entry.name === "notify_team") {
-    return r.simulated ? "Team notified" : String(r.result ?? "Sent");
-  }
+  if (entry.name === "notify_team") return "Team notified";
   if (entry.name === "record_knowledge_gap") {
     return String(r.topic ?? "Logged for the docs team");
   }
@@ -61,17 +61,17 @@ export default function AgentPanel({
   refused,
   packageId,
   toolTrace,
-  planner,
-  agentMode,
 }: Props) {
-  void planner;
   const pkg = getPackage(packageId);
   const [busy, setBusy] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash>(null);
   const [showManual, setShowManual] = useState(false);
   const [showTrace, setShowTrace] = useState(false);
 
-  const manualEnabled = pkg.includesAgent && !refused && Boolean(question);
+  if (!pkg.includesAgent) return null;
+
+  const hasTrace = Boolean(toolTrace && toolTrace.length > 0);
+  const manualEnabled = !refused && Boolean(question);
 
   const run = async (kind: "ticket" | "log" | "webhook") => {
     if (!manualEnabled || busy) return;
@@ -107,15 +107,13 @@ export default function AgentPanel({
       } else if (kind === "log") {
         setFlash({
           ok: true,
-          message: "Saved to the activity log",
+          message: "Saved to activity log",
           href: "/admin#actions",
         });
       } else {
         setFlash({
           ok: true,
-          message: data.simulated
-            ? "Team notification recorded"
-            : `Notification sent`,
+          message: "Team notified",
           href: "/admin#actions",
         });
       }
@@ -129,67 +127,50 @@ export default function AgentPanel({
     }
   };
 
-  if (!pkg.includesAgent) {
+  // Stay quiet until there’s something useful to show
+  if (!hasTrace && !showManual && !flash) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-[11px] text-slate-500">
-        Ticket creation and team notifications are available on the{" "}
-        <span className="font-semibold text-indigo-700">Premium</span> plan.
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowManual(true)}
+          className="text-[11px] font-medium text-slate-400 hover:text-indigo-600"
+        >
+          More actions
+        </button>
       </div>
     );
   }
 
-  const hasTrace = Boolean(toolTrace && toolTrace.length > 0);
-
   return (
-    <div className="rounded-lg border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/60 px-3 py-2 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
-            {agentMode ? "Assistant actions" : "Quick actions"}
-          </div>
-          <p className="mt-0.5 text-[11px] text-slate-600">
-            {agentMode
-              ? "Can look up docs, open tickets, and notify your team."
-              : "Run a follow-up action on the latest answer."}
-          </p>
-        </div>
-        <Link
-          href="/admin"
-          className="text-[11px] font-semibold text-indigo-700 hover:underline"
-        >
-          Operations →
-        </Link>
-      </div>
-
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
       {hasTrace && (
-        <div className="mt-2 rounded-lg border border-violet-200/80 bg-white/90 p-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setShowTrace((v) => !v)}
-              className="flex items-center gap-2 text-left"
-            >
-              <h3 className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
-                Actions taken · {toolTrace!.length}
-              </h3>
-              <span className="text-[10px] font-semibold text-indigo-600">
-                {showTrace ? "Hide" : "Show"}
-              </span>
-            </button>
-          </div>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowTrace((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 text-left"
+          >
+            <span className="text-[11px] font-semibold text-slate-700">
+              Actions taken · {toolTrace!.length}
+            </span>
+            <span className="text-[10px] font-semibold text-indigo-600">
+              {showTrace ? "Hide" : "Show"}
+            </span>
+          </button>
           {!showTrace && (
             <p className="mt-1 truncate text-[11px] text-slate-500">
               {toolTrace!.map((t) => actionLabel(t.name)).join(" → ")}
             </p>
           )}
           {showTrace && (
-            <ol className="mt-2 max-h-36 space-y-1.5 overflow-y-auto">
+            <ol className="mt-2 max-h-32 space-y-1.5 overflow-y-auto">
               {toolTrace!.map((t, i) => (
                 <li
                   key={`${t.name}-${i}`}
-                  className="flex items-start gap-2 rounded-md border border-slate-100 bg-slate-50/80 px-2 py-1.5 text-[11px]"
+                  className="flex items-start gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-[11px]"
                 >
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -207,52 +188,57 @@ export default function AgentPanel({
         </div>
       )}
 
-      {!hasTrace && agentMode && !question && (
-        <p className="mt-1.5 text-[11px] text-slate-500">
-          Try: “I want a refund, create a ticket and notify the team”
-        </p>
-      )}
-
-      <div className="mt-2">
-        <button
-          type="button"
-          onClick={() => setShowManual((v) => !v)}
-          className="text-[11px] font-semibold text-violet-700 hover:underline"
-        >
-          {showManual ? "Hide more actions" : "More actions"}
-        </button>
-        {showManual && (
-          <div className="mt-2">
+      <div className={`${hasTrace ? "mt-2 border-t border-slate-100 pt-2" : ""}`}>
+        {!showManual ? (
+          <button
+            type="button"
+            onClick={() => setShowManual(true)}
+            className="text-[11px] font-medium text-slate-500 hover:text-indigo-600"
+          >
+            More actions
+          </button>
+        ) : (
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-600">
+                Quick actions
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowManual(false)}
+                className="text-[10px] text-slate-400 hover:text-slate-600"
+              >
+                Hide
+              </button>
+            </div>
             {!manualEnabled ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
-                Actions unlock after a grounded help-center answer.
-              </div>
+              <p className="text-[11px] text-slate-500">
+                Actions unlock after a help-center answer.
+              </p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={Boolean(busy)}
                   onClick={() => void run("ticket")}
-                  className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-600 disabled:opacity-40"
+                  className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-indigo-500 disabled:opacity-40"
                 >
                   {busy === "ticket" ? "Creating…" : "Create ticket"}
                 </button>
                 <button
                   type="button"
                   disabled={Boolean(busy)}
-                  onClick={() => void run("log")}
-                  className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 transition hover:bg-violet-50 disabled:opacity-40"
-                >
-                  {busy === "log" ? "Saving…" : "Log activity"}
-                </button>
-                <button
-                  type="button"
-                  disabled={Boolean(busy)}
                   onClick={() => void run("webhook")}
-                  className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 transition hover:bg-violet-50 disabled:opacity-40"
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                 >
                   {busy === "webhook" ? "Sending…" : "Notify team"}
                 </button>
+                <Link
+                  href="/admin"
+                  className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 hover:underline"
+                >
+                  Operations →
+                </Link>
               </div>
             )}
           </div>
@@ -261,10 +247,10 @@ export default function AgentPanel({
 
       {flash && (
         <div
-          className={`mt-2 rounded-lg px-3 py-2 text-xs ${
+          className={`mt-2 rounded-lg px-2.5 py-1.5 text-[11px] ${
             flash.ok
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border border-red-200 bg-red-50 text-red-700"
+              ? "bg-emerald-50 text-emerald-800"
+              : "bg-red-50 text-red-700"
           }`}
         >
           {flash.message}
@@ -272,7 +258,7 @@ export default function AgentPanel({
             <>
               {" · "}
               <Link href={flash.href} className="font-semibold underline">
-                view in operations
+                view
               </Link>
             </>
           )}

@@ -30,7 +30,6 @@ function formatWhen(iso?: string) {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
     });
   } catch {
     return iso;
@@ -49,11 +48,10 @@ export default function AdminPage() {
   const [needsGate, setNeedsGate] = useState(false);
 
   useEffect(() => {
-    // Optional demo gate: if ADMIN_DEMO_PASSWORD is advertised via health/env
-    // we only check client-side against sessionStorage for portfolio demos.
-    const required = typeof window !== "undefined"
-      ? sessionStorage.getItem("citeqa_admin_ok")
-      : null;
+    const required =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("citeqa_admin_ok")
+        : null;
     fetch("/api/health")
       .then((r) => r.json())
       .then((d) => {
@@ -80,7 +78,7 @@ export default function AdminPage() {
       if (l.ok) setLogs(l.entries || []);
       if (e.ok && e.last) setEvalSummary(e.last as EvalSummary);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load admin data");
+      setError(err instanceof Error ? err.message : "Failed to load operations data");
     }
   }, []);
 
@@ -103,12 +101,12 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/eval", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Eval failed");
+      if (!res.ok) throw new Error(data.error || "Quality check failed");
       setEvalSummary(data.summary);
       setTab("eval");
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Eval failed");
+      setError(e instanceof Error ? e.message : "Quality check failed");
     } finally {
       setEvalBusy(false);
     }
@@ -126,36 +124,38 @@ export default function AdminPage() {
       setNeedsGate(false);
       return;
     }
-    // Fallback: if gate API missing / password unset, allow demo
     if (!needsGate) {
       setGateOk(true);
       return;
     }
-    setError("Wrong demo password");
+    setError("Incorrect password");
   };
 
   if (!gateOk) {
     return (
       <main className="mx-auto flex max-w-md flex-1 flex-col justify-center px-4 py-16">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-bold text-slate-900">Demo admin gate</h1>
+          <h1 className="text-lg font-bold text-slate-900">Operations access</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Enter the optional <code className="text-xs">ADMIN_DEMO_PASSWORD</code>{" "}
-            from env, or leave unset for open portfolio access.
+            Enter the operations password to continue.
           </p>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void tryUnlock();
+            }}
             className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Demo password"
+            placeholder="Password"
+            aria-label="Operations password"
           />
           <button
             type="button"
             onClick={() => void tryUnlock()}
             className="mt-3 w-full rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white"
           >
-            Unlock
+            Continue
           </button>
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
         </div>
@@ -165,32 +165,27 @@ export default function AdminPage() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "tickets", label: "Tickets" },
-    { id: "actions", label: "Action log" },
-    { id: "docs", label: "Docs" },
-    { id: "eval", label: "Eval" },
+    { id: "actions", label: "Activity" },
+    { id: "docs", label: "Knowledge" },
+    { id: "eval", label: "Quality" },
   ];
 
   return (
-    <main className="flex flex-1 flex-col">
-      <div className="border-b border-amber-200 bg-amber-50">
-        <div className="mx-auto max-w-6xl px-4 py-2 text-center text-xs font-medium text-amber-900 sm:px-6">
-          Demo admin · portfolio mode — no heavy auth. Tickets & logs persist in{" "}
-          <code className="rounded bg-amber-100 px-1">data/</code> on this machine.
-        </div>
-      </div>
-
+    <main className="flex flex-1 flex-col bg-slate-50/50">
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Admin dashboard</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              Operations
+            </h1>
             <p className="text-sm text-slate-500">
-              Docs · eval · tickets · action audit trail
+              Tickets, activity, knowledge library, and quality checks
             </p>
           </div>
           <button
             type="button"
             onClick={() => void refresh()}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
             Refresh
           </button>
@@ -204,7 +199,11 @@ export default function AdminPage() {
               onClick={() => {
                 setTab(t.id);
                 if (typeof window !== "undefined") {
-                  window.history.replaceState(null, "", `#${t.id === "actions" ? "actions" : t.id}`);
+                  window.history.replaceState(
+                    null,
+                    "",
+                    `#${t.id === "actions" ? "actions" : t.id}`
+                  );
                 }
               }}
               className={`rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
@@ -238,7 +237,7 @@ export default function AdminPage() {
               {tickets.length === 0 ? (
                 <Empty
                   title="No tickets yet"
-                  body="From /demo, ask a grounded question then click “Create support ticket”."
+                  body="When customers ask for help that needs a human, tickets created from Help chat appear here."
                 />
               ) : (
                 tickets.map((t) => (
@@ -248,7 +247,7 @@ export default function AdminPage() {
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <div className="text-xs font-mono text-slate-400">{t.id}</div>
+                        <div className="text-xs text-slate-400">{t.id}</div>
                         <h3 className="text-sm font-semibold text-slate-900">
                           {t.subject}
                         </h3>
@@ -282,9 +281,9 @@ export default function AdminPage() {
                         {t.citations.map((c, i) => (
                           <span
                             key={i}
-                            className="rounded-md border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] text-indigo-800"
+                            className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] text-slate-700"
                           >
-                            [{c.rank}] {c.docTitle} · {c.section}
+                            {c.docTitle} · {c.section}
                           </span>
                         ))}
                       </div>
@@ -296,12 +295,15 @@ export default function AdminPage() {
           )}
 
           {tab === "actions" && (
-            <div id="actions" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div
+              id="actions"
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+            >
               {logs.length === 0 ? (
                 <div className="p-4">
                   <Empty
-                    title="Action log empty"
-                    body="Agent actions and eval runs append rows to data/action-log.csv."
+                    title="No activity yet"
+                    body="Tickets, notifications, and other assistant actions will be listed here."
                   />
                 </div>
               ) : (
@@ -309,11 +311,11 @@ export default function AdminPage() {
                   <table className="min-w-full text-left text-xs">
                     <thead className="border-b border-slate-100 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
                       <tr>
-                        <th className="px-3 py-2 font-semibold">When</th>
-                        <th className="px-3 py-2 font-semibold">Action</th>
-                        <th className="px-3 py-2 font-semibold">Result</th>
-                        <th className="px-3 py-2 font-semibold">Question</th>
-                        <th className="px-3 py-2 font-semibold">Detail</th>
+                        <th className="px-3 py-2.5 font-semibold">When</th>
+                        <th className="px-3 py-2.5 font-semibold">Action</th>
+                        <th className="px-3 py-2.5 font-semibold">Result</th>
+                        <th className="px-3 py-2.5 font-semibold">Question</th>
+                        <th className="px-3 py-2.5 font-semibold">Detail</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -322,16 +324,18 @@ export default function AdminPage() {
                           key={`${row.timestamp}-${i}`}
                           className="border-b border-slate-50 align-top hover:bg-slate-50/80"
                         >
-                          <td className="whitespace-nowrap px-3 py-2 text-slate-500">
+                          <td className="whitespace-nowrap px-3 py-2.5 text-slate-500">
                             {formatWhen(row.timestamp)}
                           </td>
-                          <td className="px-3 py-2 font-semibold text-slate-800">
+                          <td className="px-3 py-2.5 font-semibold text-slate-800">
                             {row.action}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5">
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                                row.result === "ok" || row.result === "pass" || row.result === "simulated"
+                                row.result === "ok" ||
+                                row.result === "pass" ||
+                                row.result === "simulated"
                                   ? "bg-emerald-50 text-emerald-700"
                                   : "bg-amber-50 text-amber-800"
                               }`}
@@ -339,10 +343,10 @@ export default function AdminPage() {
                               {row.result}
                             </span>
                           </td>
-                          <td className="max-w-[200px] truncate px-3 py-2 text-slate-600">
+                          <td className="max-w-[200px] truncate px-3 py-2.5 text-slate-600">
                             {row.question}
                           </td>
-                          <td className="max-w-[240px] truncate px-3 py-2 text-slate-500">
+                          <td className="max-w-[240px] truncate px-3 py-2.5 text-slate-500">
                             {row.detail}
                           </td>
                         </tr>
@@ -358,13 +362,11 @@ export default function AdminPage() {
             <div id="eval" className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-semibold text-slate-900">
-                  Quality eval suite
+                  Quality checks
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Same harness as{" "}
-                  <code className="rounded bg-slate-100 px-1">npm run eval</code>.
-                  Runs offline against local MiniLM retrieval — no OpenAI required.
-                  First run may take a minute while embeddings warm.
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Run a fixed set of support questions to confirm answers stay
+                  grounded in the help center.
                 </p>
                 <button
                   type="button"
@@ -372,7 +374,7 @@ export default function AdminPage() {
                   onClick={() => void runEval()}
                   className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-40"
                 >
-                  {evalBusy ? "Running eval…" : "Run eval in-app"}
+                  {evalBusy ? "Running…" : "Run quality check"}
                 </button>
               </div>
 
@@ -386,11 +388,13 @@ export default function AdminPage() {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {evalSummary.ok ? "PASS" : "FAIL"}
+                      {evalSummary.ok ? "Healthy" : "Needs attention"}
                     </span>
                     <span className="text-sm font-semibold text-slate-800">
                       {evalSummary.passed}/{evalSummary.total} passed
-                      {evalSummary.failed ? ` · ${evalSummary.failed} failed` : ""}
+                      {evalSummary.failed
+                        ? ` · ${evalSummary.failed} failed`
+                        : ""}
                     </span>
                     {evalSummary.ranAt && (
                       <span className="text-xs text-slate-400">
@@ -410,11 +414,10 @@ export default function AdminPage() {
                               r.pass ? "text-emerald-700" : "text-red-700"
                             }`}
                           >
-                            {r.pass ? "PASS" : "FAIL"}
+                            {r.pass ? "Pass" : "Fail"}
                           </span>
-                          <span className="font-mono text-slate-700">{r.id}</span>
-                          <span className="text-slate-400">
-                            {r.mode} · refused={String(r.refused)}
+                          <span className="font-medium text-slate-700">
+                            {r.id}
                           </span>
                         </div>
                         <div className="mt-0.5 text-slate-500">{r.topLabel}</div>
@@ -429,8 +432,8 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <Empty
-                  title="No eval results yet"
-                  body="Click “Run eval in-app” or run npm run eval in the terminal."
+                  title="No quality results yet"
+                  body="Run a quality check to confirm the assistant is answering from the help center."
                 />
               )}
             </div>
@@ -443,9 +446,11 @@ export default function AdminPage() {
 
 function Empty({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
+    <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-12 text-center shadow-sm">
       <div className="text-sm font-semibold text-slate-800">{title}</div>
-      <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">{body}</p>
+      <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-slate-500">
+        {body}
+      </p>
     </div>
   );
 }

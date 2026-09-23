@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CiteQA — Support chat grounded in your docs",
+  title: "Northstar Support — Help center assistant",
   description:
-    "Help-center chatbot that answers from your docs, links the articles used, and can open tickets or notify your team.",
+    "Northstar Analytics support chat: answers from the help center, related articles, tickets, and team notifications.",
 };
 
 export default function RootLayout({
