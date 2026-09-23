@@ -56,6 +56,7 @@ export default function AgentPanel({
   const [busy, setBusy] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash>(null);
   const [showManual, setShowManual] = useState(false);
+  const [showTrace, setShowTrace] = useState(false);
 
   const manualEnabled = pkg.includesAgent && !refused && Boolean(question);
 
@@ -149,61 +150,77 @@ export default function AgentPanel({
         </Link>
       </div>
 
-      {/* Tool trace panel */}
+      {/* Tool trace panel — collapsed by default so chat viewport stays tall */}
       {hasTrace && (
         <div className="mt-3 rounded-lg border border-violet-200/80 bg-white/90 p-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
-              Tool trace
-            </h3>
+            <button
+              type="button"
+              onClick={() => setShowTrace((v) => !v)}
+              className="flex items-center gap-2 text-left"
+            >
+              <h3 className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
+                Tool trace · {toolTrace!.length} step{toolTrace!.length === 1 ? "" : "s"}
+              </h3>
+              <span className="text-[10px] font-semibold text-indigo-600">
+                {showTrace ? "Hide" : "Show"}
+              </span>
+            </button>
             {planner && (
               <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-800">
                 planner: {planner}
               </span>
             )}
           </div>
-          <ol className="mt-2 space-y-1.5">
-            {toolTrace!.map((t, i) => (
-              <li
-                key={`${t.name}-${i}`}
-                className="flex items-start gap-2 rounded-md border border-slate-100 bg-slate-50/80 px-2 py-1.5 text-[11px]"
-              >
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <code className="font-semibold text-slate-800">{t.name}</code>
-                    <span
-                      className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
-                        t.ok
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {t.ok ? "ok" : "err"}
-                    </span>
-                    {typeof t.ms === "number" && (
-                      <span className="text-[10px] text-slate-400">{t.ms}ms</span>
+          {!showTrace && (
+            <p className="mt-1.5 truncate text-[11px] text-slate-500">
+              {toolTrace!.map((t) => t.name).join(" → ")}
+            </p>
+          )}
+          {showTrace && (
+            <ol className="mt-2 max-h-36 space-y-1.5 overflow-y-auto">
+              {toolTrace!.map((t, i) => (
+                <li
+                  key={`${t.name}-${i}`}
+                  className="flex items-start gap-2 rounded-md border border-slate-100 bg-slate-50/80 px-2 py-1.5 text-[11px]"
+                >
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <code className="font-semibold text-slate-800">{t.name}</code>
+                      <span
+                        className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
+                          t.ok
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {t.ok ? "ok" : "err"}
+                      </span>
+                      {typeof t.ms === "number" && (
+                        <span className="text-[10px] text-slate-400">{t.ms}ms</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 truncate text-slate-500">
+                      {summarizeResult(t)}
+                    </div>
+                    {Object.keys(t.args || {}).length > 0 && (
+                      <details className="mt-1">
+                        <summary className="cursor-pointer text-[10px] text-indigo-600">
+                          args
+                        </summary>
+                        <pre className="mt-1 max-h-20 overflow-auto rounded bg-slate-900/90 p-1.5 text-[9px] text-slate-100">
+                          {JSON.stringify(t.args, null, 2)}
+                        </pre>
+                      </details>
                     )}
                   </div>
-                  <div className="mt-0.5 truncate text-slate-500">
-                    {summarizeResult(t)}
-                  </div>
-                  {Object.keys(t.args || {}).length > 0 && (
-                    <details className="mt-1">
-                      <summary className="cursor-pointer text-[10px] text-indigo-600">
-                        args
-                      </summary>
-                      <pre className="mt-1 max-h-24 overflow-auto rounded bg-slate-900/90 p-1.5 text-[9px] text-slate-100">
-                        {JSON.stringify(t.args, null, 2)}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       )}
 

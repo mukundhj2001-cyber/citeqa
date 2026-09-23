@@ -134,11 +134,11 @@ export default function ChatWidget({
 
 
   return (
-    <div className="flex h-[min(720px,calc(100vh-8rem))] w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+    <div className="flex h-[min(70vh,720px)] min-h-[28rem] w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
       {/* Main chat column */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-white">
+        <header className="flex shrink-0 items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-white">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-lg font-bold backdrop-blur">
             CQ
           </div>
@@ -159,8 +159,8 @@ export default function ChatWidget({
           </div>
         </header>
 
-        {/* Messages */}
-        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/80 px-4 py-5 sm:px-6">
+        {/* Messages — flexible grow area; must keep min-h-0 so sibling composer cannot crush it */}
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/80 px-4 py-5 sm:px-6">
           {messages.length === 0 && (
             <EmptyState onPick={(q) => void send(q)} starters={STARTERS} />
           )}
@@ -194,8 +194,8 @@ export default function ChatWidget({
           <div ref={bottomRef} />
         </div>
 
-        {/* Composer */}
-        <div className="border-t border-slate-100 bg-white p-4">
+        {/* Composer + agent controls — fixed height; traces scroll inside, not into messages */}
+        <div className="shrink-0 border-t border-slate-100 bg-white p-4">
           <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
             <textarea
               ref={inputRef}
@@ -288,7 +288,9 @@ export default function ChatWidget({
             </div>
           )}
 
-          <div className={`mt-3 ${pkg.includesAgent ? "" : "opacity-70"}`}>
+          <div
+            className={`mt-3 max-h-44 overflow-y-auto ${pkg.includesAgent ? "" : "opacity-70"}`}
+          >
             <AgentPanel
               packageId={packageId}
               question={lastUser?.content ?? ""}
@@ -323,7 +325,7 @@ export default function ChatWidget({
       )}
 
       {/* Side panel */}
-      <aside className="hidden w-[340px] shrink-0 flex-col border-l border-slate-200 bg-white lg:flex">
+      <aside className="hidden min-h-0 w-[340px] shrink-0 flex-col border-l border-slate-200 bg-white lg:flex">
         <div className="flex border-b border-slate-100">
           <button
             type="button"
@@ -371,7 +373,7 @@ export default function ChatWidget({
           </p>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           {activeCitation ? (
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
               <div className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600">

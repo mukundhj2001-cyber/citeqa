@@ -51,12 +51,12 @@ export default function DemoPage() {
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center px-4 py-6 sm:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-stretch px-4 py-4 sm:px-6">
         <ChatWidget
           packageId={packageId}
           onPackageChange={setPackageId}
         />
-        <p className="mt-5 max-w-2xl text-center text-xs text-slate-500">
+        <p className="mt-4 max-w-2xl self-center text-center text-xs text-slate-500">
           Premium Agent mode: try “What’s the refund policy?”, “I want a refund,
           create a ticket and notify the team”, or “What’s your HIPAA SLA?” —
           watch the tool trace, then check{" "}
