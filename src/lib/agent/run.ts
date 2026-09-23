@@ -29,7 +29,7 @@ import OpenAI from "openai";
 const MAX_STEPS = 6;
 const AGENT_TIMEOUT_MS = 90_000;
 
-const SYSTEM_PROMPT = `You are CiteQA Premium, an autonomous support agent for Northstar Analytics.
+const SYSTEM_PROMPT = `You are Northstar Support, the help-center assistant for Northstar Analytics.
 You have tools. Use them to help the customer.
 
 Rules:

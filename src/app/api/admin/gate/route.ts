@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const expected = process.env.ADMIN_DEMO_PASSWORD?.trim();
   if (!expected) {
-    // No password configured — open portfolio mode
+    // No password configured — open access when unset
     return NextResponse.json({ ok: true, open: true });
   }
   try {
