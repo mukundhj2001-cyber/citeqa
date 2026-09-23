@@ -130,7 +130,7 @@ export default function AgentPanel({
   const hasTrace = Boolean(toolTrace && toolTrace.length > 0);
 
   return (
-    <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/60 p-4 shadow-sm">
+    <div className="rounded-lg border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/60 px-3 py-2 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
@@ -225,9 +225,8 @@ export default function AgentPanel({
       )}
 
       {!hasTrace && agentMode && !question && (
-        <p className="mt-3 text-xs text-slate-500">
-          Ask something like “I want a refund, create a ticket and notify the team”
-          — the agent will call tools and show the trace here.
+        <p className="mt-1.5 text-[11px] text-slate-500">
+          Try: “I want a refund, create a ticket and notify the team”
         </p>
       )}
 

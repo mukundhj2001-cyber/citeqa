@@ -35,6 +35,7 @@ export default function ChatWidget({
 } = {}) {
   const pkg = getPackage(packageId);
   void compactNav;
+  void onPackageChange;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -134,33 +135,55 @@ export default function ChatWidget({
 
 
   return (
-    <div className="flex h-[min(70vh,720px)] min-h-[28rem] w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-      {/* Main chat column */}
+    <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-white">
+      {/* Main chat column — owns remaining viewport height */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {/* Header */}
-        <header className="flex shrink-0 items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-white">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-lg font-bold backdrop-blur">
+        {/* Slim chat header */}
+        <header className="flex shrink-0 items-center gap-3 border-b border-indigo-500/30 bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-sm font-bold backdrop-blur">
             CQ
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold tracking-tight">CiteQA</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-sm font-semibold tracking-tight">CiteQA</h1>
               <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                {pkg.name} demo
+                {pkg.name}
               </span>
+              {pkg.includesAgent && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setAgentMode(true)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                      agentMode
+                        ? "bg-white text-violet-700"
+                        : "bg-white/15 text-white hover:bg-white/25"
+                    }`}
+                  >
+                    Agent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAgentMode(false)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                      !agentMode
+                        ? "bg-white text-indigo-700"
+                        : "bg-white/15 text-white hover:bg-white/25"
+                    }`}
+                  >
+                    Classic
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="truncate text-xs text-indigo-100">
-              Support answers grounded in your docs · Northstar Analytics KB
+            <p className="truncate text-[11px] text-indigo-100">
+              Northstar KB · {indexInfo}
             </p>
-          </div>
-          <div className="hidden text-right text-[10px] text-indigo-100 sm:block">
-            <div className="font-medium text-white/90">Index</div>
-            <div>{indexInfo}</div>
           </div>
         </header>
 
         {/* Messages — flexible grow area; must keep min-h-0 so sibling composer cannot crush it */}
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/80 px-4 py-5 sm:px-6">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/80 px-4 py-4 sm:px-6 lg:px-8">
           {messages.length === 0 && (
             <EmptyState onPick={(q) => void send(q)} starters={STARTERS} />
           )}
@@ -194,9 +217,9 @@ export default function ChatWidget({
           <div ref={bottomRef} />
         </div>
 
-        {/* Composer + agent controls — fixed height; traces scroll inside, not into messages */}
-        <div className="shrink-0 border-t border-slate-100 bg-white p-4">
-          <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
+        {/* Composer pinned to bottom of full-height chat column */}
+        <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 sm:px-6">
+          <div className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
             <textarea
               ref={inputRef}
               rows={1}
@@ -216,80 +239,21 @@ export default function ChatWidget({
               Send
             </button>
           </div>
-          <p className="mt-2 text-center text-[11px] text-slate-400">
-            Answers cite your indexed docs · weak matches refuse rather than invent policy
-          </p>
-          <button
-            type="button"
-            onClick={() => setSideTab("docs")}
-            className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-2 text-xs font-medium text-indigo-700 lg:hidden"
-          >
-            Manage uploads & re-index
-          </button>
-
-          {pkg.includesAgent && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                Mode
-              </span>
-              <button
-                type="button"
-                onClick={() => setAgentMode(true)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                  agentMode
-                    ? "bg-violet-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                Agent
-              </button>
-              <button
-                type="button"
-                onClick={() => setAgentMode(false)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                  !agentMode
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                Classic chat
-              </button>
-              <span className="text-[10px] text-slate-400">
-                {agentMode
-                  ? "Calls /api/agent · multi-step tools"
-                  : "Calls /api/chat · manual actions only"}
-              </span>
-            </div>
-          )}
-
-          {onPackageChange && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                Package
-              </span>
-              {(["basic", "standard", "premium"] as PackageId[]).map((id) => {
-                const p = getPackage(id);
-                const active = packageId === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => onPackageChange(id)}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                      active
-                        ? "bg-indigo-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {p.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="mx-auto mt-2 flex w-full max-w-3xl items-center justify-between gap-2">
+            <p className="text-[11px] text-slate-400">
+              Grounded answers with citations · weak matches refuse
+            </p>
+            <button
+              type="button"
+              onClick={() => setSideTab("docs")}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 lg:hidden"
+            >
+              Docs
+            </button>
+          </div>
 
           <div
-            className={`mt-3 max-h-44 overflow-y-auto ${pkg.includesAgent ? "" : "opacity-70"}`}
+            className={`mx-auto mt-2 max-h-32 w-full max-w-3xl overflow-y-auto ${pkg.includesAgent ? "" : "opacity-70"}`}
           >
             <AgentPanel
               packageId={packageId}
@@ -325,7 +289,7 @@ export default function ChatWidget({
       )}
 
       {/* Side panel */}
-      <aside className="hidden min-h-0 w-[340px] shrink-0 flex-col border-l border-slate-200 bg-white lg:flex">
+      <aside className="hidden min-h-0 w-[320px] shrink-0 flex-col border-l border-slate-200 bg-slate-50/50 lg:flex xl:w-[360px]">
         <div className="flex border-b border-slate-100">
           <button
             type="button"
@@ -462,7 +426,7 @@ function EmptyState({
   onPick: (q: string) => void;
 }) {
   return (
-    <div className="mx-auto max-w-md py-6 text-center">
+    <div className="mx-auto flex min-h-full max-w-md flex-col justify-center py-8 text-center">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700">
         CQ
       </div>
