@@ -1,6 +1,6 @@
 # Pricing, Billing & Refunds
 
-Heliora Analytics pricing is transparent and billed in USD.
+Cyberfield Analytics pricing is transparent and billed in USD.
 
 ## Plans overview
 
@@ -56,7 +56,7 @@ Refunds are available under these rules:
 
 1. **Monthly plans:** You may request a full refund within **14 days** of the initial paid charge if you have not used more than 10% of your monthly event quota.
 2. **Annual plans:** You may request a prorated refund within **30 days** of purchase. After 30 days, annual plans are non-refundable except where required by law.
-3. **How to request:** Email billing@heliora-analytics.example with your workspace ID and reason. Refunds are processed within 5–7 business days to the original payment method.
+3. **How to request:** Email billing@cyberfield-analytics.example with your workspace ID and reason. Refunds are processed within 5–7 business days to the original payment method.
 4. **Chargebacks:** Please contact billing before filing a chargeback so we can resolve the issue faster.
 
 We do **not** refund for unused seats mid-cycle on monthly plans after the 14-day window, or for overage charges already incurred.

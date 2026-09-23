@@ -1,10 +1,10 @@
 # Getting Started & Onboarding
 
-Follow these steps to go from signup to your first dashboard in Heliora Analytics.
+Follow these steps to go from signup to your first dashboard in Cyberfield Analytics.
 
 ## Create your workspace
 
-1. Sign up at app.heliora-analytics.example
+1. Sign up at app.cyberfield-analytics.example
 2. Choose a workspace name (this can be changed later under Settings → General)
 3. Invite teammates if ready (optional during onboarding)
 
@@ -14,12 +14,12 @@ Your 14-day Pro trial starts when the workspace is created.
 
 ### Web (JavaScript)
 
-Add the Heliora snippet to your site `<head>`:
+Add the Cyberfield snippet to your site `<head>`:
 
 ```html
 <script>
-  (function(n,o){/* Heliora loader stub for demo docs */})(window, document);
-  heliora.init('YOUR_WRITE_KEY');
+  (function(n,o){/* Cyberfield loader stub for demo docs */})(window, document);
+  cyberfield.init('YOUR_WRITE_KEY');
 </script>
 ```
 
@@ -70,4 +70,4 @@ Use the template gallery: Dashboards → New from template → “Activation ove
 
 ## Need help during onboarding?
 
-Pro trial users can use chat support. Free plan: email support@heliora-analytics.example with subject “Onboarding help” and your workspace ID.
+Pro trial users can use chat support. Free plan: email support@cyberfield-analytics.example with subject “Onboarding help” and your workspace ID.

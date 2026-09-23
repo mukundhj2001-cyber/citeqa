@@ -146,7 +146,7 @@ export default function ChatWidget({
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
           <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm">HA</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm">CF</div>
             <span
               className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500"
               aria-hidden
@@ -154,7 +154,7 @@ export default function ChatWidget({
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-sm font-semibold tracking-tight text-slate-900">
-              Heliora Support
+              Cyberfield Support
             </h1>
             <p className="truncate text-[11px] text-slate-500">
               Online · Answers from the help center
@@ -230,10 +230,10 @@ export default function ChatWidget({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Message Heliora Support…"
+              placeholder="Message Cyberfield Support…"
               className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
               disabled={loading}
-              aria-label="Message Heliora Support"
+              aria-label="Message Cyberfield Support"
             />
             <button
               type="submit"
@@ -398,12 +398,12 @@ function EmptyState({
 }) {
   return (
     <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center py-10 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-xl font-bold text-white shadow-lg shadow-indigo-200/60">HA</div>
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-xl font-bold text-white shadow-lg shadow-indigo-200/60">CF</div>
       <h2 className="mt-5 text-xl font-semibold tracking-tight text-slate-900">
         How can we help?
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-500">
-        Ask about billing, plans, or getting started. We’ll use the Heliora help center — and open a ticket when you need a human.
+        Ask about billing, plans, or getting started. We’ll use the Cyberfield help center — and open a ticket when you need a human.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         {starters.map((q) => (
@@ -431,7 +431,7 @@ function Avatar({ bot }: { bot?: boolean }) {
       }`}
       aria-hidden
     >
-      {bot ? "HA" : "You"}
+      {bot ? "CF" : "You"}
     </div>
   );
 }

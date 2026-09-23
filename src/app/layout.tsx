@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Heliora Support — Help center assistant",
+  title: "Cyberfield Support — Help center assistant",
   description:
-    "Heliora Analytics support chat: answers from the help center, related articles, tickets, and team notifications.",
+    "Cyberfield Analytics support chat: answers from the help center, related articles, tickets, and team notifications.",
 };
 
 export default function RootLayout({

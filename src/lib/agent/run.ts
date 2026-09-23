@@ -34,7 +34,7 @@ import OpenAI from "openai";
 const MAX_STEPS = 6;
 const AGENT_TIMEOUT_MS = 90_000;
 
-const SYSTEM_PROMPT = `You are Heliora Support, the help-center assistant for Heliora Analytics customers.
+const SYSTEM_PROMPT = `You are Cyberfield Support, the help-center assistant for Cyberfield Analytics customers.
 You have internal tools. Use them, then write ONLY the final customer-facing reply.
 
 Rules:
@@ -195,9 +195,9 @@ async function composeFinalAnswer(
       : "";
     return {
       answer:
-        "I couldn’t find that in the Heliora help center." +
+        "I couldn’t find that in the Cyberfield help center." +
         gapHint +
-        "\n\nI can help with billing, refunds, plans, password resets, and getting started — or email support@heliora-analytics.example.",
+        "\n\nI can help with billing, refunds, plans, password resets, and getting started — or email support@cyberfield-analytics.example.",
       mode: "refuse",
       refused: true,
     };

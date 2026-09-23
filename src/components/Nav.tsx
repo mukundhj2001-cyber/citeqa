@@ -18,10 +18,10 @@ export default function Nav() {
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm shadow-indigo-300/40">HA</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-sm shadow-indigo-300/40">CF</span>
           <span className="leading-tight">
             <span className="block text-sm font-bold tracking-tight text-slate-900">
-              Heliora Support
+              Cyberfield Support
             </span>
             <span className="hidden text-[10px] text-slate-500 sm:block">
               Help center assistant

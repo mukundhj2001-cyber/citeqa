@@ -34,7 +34,7 @@ export const TOOL_DEFINITIONS: Array<{
     function: {
       name: "search_docs",
       description:
-        "Look up Heliora help-center articles for the customer's question. Call this before answering factual or policy questions. Results are for your reasoning only — never paste them as a chunk list in the customer reply.",
+        "Look up Cyberfield help-center articles for the customer's question. Call this before answering factual or policy questions. Results are for your reasoning only — never paste them as a chunk list in the customer reply.",
       parameters: {
         type: "object",
         properties: {

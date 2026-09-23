@@ -1,6 +1,6 @@
-# Heliora Support (CiteQA)
+# Cyberfield Support (CiteQA)
 
-Help-center assistant for **Heliora Analytics**: grounded support chat, related articles, tickets, and an operations console.
+Help-center assistant for **Cyberfield Analytics**: grounded support chat, related articles, tickets, and an operations console.
 
 Customer-facing product UI lives at `/demo` (Help) and `/admin` (Operations). CiteQA is the implementation underneath.
 
