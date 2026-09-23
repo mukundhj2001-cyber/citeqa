@@ -4,59 +4,58 @@ import { PACKAGES } from "@/lib/packages";
 const STEPS = [
   {
     n: "01",
-    title: "Index your docs locally",
-    body: "MiniLM embeddings stay on disk. Sample Northstar KB ships ready — upload more anytime.",
+    title: "Connect your help docs",
+    body: "Ship with a sample help center, or upload your own articles anytime.",
   },
   {
     n: "02",
-    title: "Ask with citations",
-    body: "Every answer cites doc · section · snippet. Weak matches refuse instead of inventing policy.",
+    title: "Customers get clear answers",
+    body: "Every reply points back to the help articles it used — no invented policy.",
   },
   {
     n: "03",
-    title: "Act with audit trail",
-    body: "Premium’s tool-calling agent multi-steps: search docs, create tickets, notify the team, log gaps — with a visible tool trace.",
+    title: "Escalate when needed",
+    body: "Premium can open tickets, notify your team, and keep a clean activity trail.",
   },
 ];
 
 const FEATURES = [
   {
-    title: "Privacy-first RAG",
-    body: "Local Transformers.js MiniLM. Docs are never sent to an embedding API. Ollama preferred for generation.",
+    title: "Answers from your docs",
+    body: "The assistant stays inside your help center so customers get trustworthy guidance.",
   },
   {
-    title: "Citations you can click",
-    body: "Source panel with ranked chunks and scores — buyers see exactly what the bot used.",
+    title: "Articles you can open",
+    body: "Related help articles appear beside the chat — titles and short excerpts, ready to share.",
   },
   {
-    title: "Refuse when unknown",
-    body: "Out-of-corpus questions get a clean refuse. Perfect for support policy demos.",
+    title: "Honest when unsure",
+    body: "If it isn’t in your docs, the bot says so instead of guessing.",
   },
   {
-    title: "Upload & re-index",
-    body: ".md / .txt / .pdf ingest with one-click re-index. Standard & Premium packages.",
+    title: "Upload & refresh",
+    body: "Add .md / .txt / .pdf articles and refresh the library in one click.",
   },
   {
-    title: "Eval harness",
-    body: "Fixed cases with pass/fail report. Run via npm run eval or Admin → Eval.",
+    title: "Quality before you ship",
+    body: "Run built-in checks so support answers stay consistent.",
   },
   {
-    title: "Autonomous support agent",
-    body: "Full tool-calling loop (Ollama-first): search · ticket · escalate · CRM note · notify · knowledge gaps + manual fallback.",
+    title: "Actions for your team",
+    body: "Premium opens tickets, escalates, and notifies ops — with a clear actions-taken summary.",
   },
 ];
 
 export default function LandingPage() {
   return (
     <main className="flex flex-1 flex-col">
-      {/* Hero */}
       <section className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-indigo-50 via-white to-slate-50">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-200/40 blur-3xl" />
         <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-indigo-200/30 blur-3xl" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-3 py-1 text-[11px] font-semibold text-indigo-700 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Premium end-to-end product demo · Fiverr / Upwork ready
+            Support chat for your help center
           </div>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             Support answers{" "}
@@ -66,45 +65,42 @@ export default function LandingPage() {
             — then act on them.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            CiteQA is a privacy-first RAG chatbot with citations, private Ollama
-            generation, document upload, an eval suite, and a Premium{" "}
-            <strong className="font-semibold text-violet-700">tool-calling support agent</strong>{" "}
-            (multi-step tools + admin audit trail).
+            CiteQA is a help-center assistant that answers from your documentation,
+            shows the articles it used, and on Premium can open tickets or notify
+            your team.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/demo"
               className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-300/40 transition hover:bg-indigo-500"
             >
-              Open live Premium demo
+              Open support chat
             </Link>
             <Link
               href="/admin"
               className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/50"
             >
-              Demo admin
+              Operations
             </Link>
             <a
               href="#packages"
               className="rounded-xl px-5 py-3 text-sm font-semibold text-indigo-700 hover:underline"
             >
-              See packages ↓
+              See plans ↓
             </a>
           </div>
           <p className="mt-6 text-xs text-slate-500">
-            No OpenAI required · local MiniLM · Ollama-first · works offline with
-            retrieval quotes
+            Private by default · works with your existing help articles
           </p>
         </div>
       </section>
 
-      {/* How it works */}
       <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
         <h2 className="text-center text-2xl font-bold text-slate-900">
           How it works
         </h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-500">
-          One cohesive product a buyer can understand in under two minutes.
+          A support experience your customers will recognize in under a minute.
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {STEPS.map((s) => (
@@ -126,11 +122,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="border-y border-slate-200/80 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <h2 className="text-center text-2xl font-bold text-slate-900">
-            Built for freelance delivery
+            Built for customer support
           </h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
@@ -148,15 +143,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Packages */}
       <section id="packages" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
         <h2 className="text-center text-2xl font-bold text-slate-900">
           Basic · Standard · Premium
         </h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-500">
-          Match your Fiverr gig tiers. The live demo runs as{" "}
-          <strong className="font-semibold text-violet-700">Premium</strong>{" "}
-          with a package switcher to preview Basic/Standard UI.
+          Choose the plan that matches how hands-on you want the assistant to be.
+          The live chat defaults to{" "}
+          <strong className="font-semibold text-violet-700">Premium</strong>.
         </p>
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           {PACKAGES.map((p) => (
@@ -170,7 +164,7 @@ export default function LandingPage() {
             >
               {p.highlight && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                  Full product
+                  Recommended
                 </span>
               )}
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -194,36 +188,34 @@ export default function LandingPage() {
                     : "border border-slate-200 bg-slate-50 text-slate-800 hover:border-indigo-300 hover:bg-indigo-50"
                 }`}
               >
-                {p.highlight ? "Try Premium demo" : `Preview as ${p.name}`}
+                {p.highlight ? "Try Premium chat" : `Preview ${p.name}`}
               </Link>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
       <section className="border-t border-slate-200 bg-gradient-to-r from-indigo-600 to-violet-600">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 py-12 sm:flex-row sm:items-center sm:px-6">
           <div>
             <h2 className="text-xl font-bold text-white">
-              60-second Fiverr demo path
+              See it as your customers would
             </h2>
             <p className="mt-1 text-sm text-indigo-100">
-              Landing → Agent demo (refund + ticket + notify) → Tool trace → Admin
+              Open the support chat, ask about a refund, and watch a ticket get created.
             </p>
           </div>
           <Link
             href="/demo"
             className="shrink-0 rounded-xl bg-white px-5 py-3 text-sm font-bold text-indigo-700 shadow-lg transition hover:bg-indigo-50"
           >
-            Start the demo
+            Open support chat
           </Link>
         </div>
       </section>
 
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
-        CiteQA · portfolio / freelance sample · Northstar Analytics fictional KB ·
-        privacy-first local stack
+        CiteQA · Northstar Analytics sample help center
       </footer>
     </main>
   );

@@ -146,7 +146,7 @@ export async function generateAnswer(
 function offlineCompose(question: string, hits: ScoredChunk[]): string {
   const top = hits.slice(0, 3);
   const lines: string[] = [
-    `Based on the Northstar Analytics docs (retrieval-only mode — run Ollama locally or set OPENAI_API_KEY for a synthesized answer):`,
+    `Here’s what I found in the Northstar Analytics help center:`,
     "",
   ];
   top.forEach((h, i) => {
@@ -160,7 +160,7 @@ function offlineCompose(question: string, hits: ScoredChunk[]): string {
     lines.push("");
   });
   lines.push(
-    `_Question received: “${question.trim()}”. Open a citation for the full source section._`
+    `_Ask a follow-up, or open a related article on the right for more detail._`
   );
   return lines.join("\n");
 }

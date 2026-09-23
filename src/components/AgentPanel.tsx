@@ -13,7 +13,6 @@ type Props = {
   citations: Citation[];
   refused?: boolean;
   packageId: PackageId;
-  /** When agent mode produced a tool trace for the last turn */
   toolTrace?: ToolTraceEntry[];
   planner?: string;
   agentMode?: boolean;
@@ -21,25 +20,38 @@ type Props = {
 
 type Flash = { ok: boolean; message: string; href?: string } | null;
 
+const ACTION_LABELS: Record<string, string> = {
+  search_docs: "Looked up help articles",
+  create_ticket: "Opened a support ticket",
+  escalate_ticket: "Escalated to the team",
+  notify_team: "Notified the team",
+  record_knowledge_gap: "Logged a knowledge gap",
+  log_crm_note: "Added a CRM note",
+};
+
+function actionLabel(name: string): string {
+  return ACTION_LABELS[name] || name.replace(/_/g, " ");
+}
+
 function summarizeResult(entry: ToolTraceEntry): string {
   const r = entry.result as Record<string, unknown> | null;
-  if (!r) return entry.ok ? "ok" : "failed";
+  if (!r) return entry.ok ? "Done" : "Couldn’t complete";
   if (typeof r.error === "string") return r.error;
   if (entry.name === "search_docs") {
-    const chunks = Array.isArray(r.chunks) ? r.chunks.length : 0;
-    return r.weak ? `weak · ${chunks} chunks` : `top ${r.topScore} · ${chunks} chunks`;
+    const n = Array.isArray(r.chunks) ? r.chunks.length : 0;
+    return r.weak ? "Limited match in help center" : `Found ${n} related section${n === 1 ? "" : "s"}`;
   }
   if (entry.name === "create_ticket" || entry.name === "escalate_ticket") {
-    return String(r.ticketId ?? "ticket");
+    return r.ticketId ? `Ticket ${r.ticketId}` : "Ticket updated";
   }
   if (entry.name === "notify_team") {
-    return r.simulated ? "simulated" : String(r.result ?? "ok");
+    return r.simulated ? "Team notified" : String(r.result ?? "Sent");
   }
   if (entry.name === "record_knowledge_gap") {
-    return String(r.topic ?? r.gapId ?? "logged");
+    return String(r.topic ?? "Logged for the docs team");
   }
-  if (entry.name === "log_crm_note") return "logged";
-  return entry.ok ? "ok" : "failed";
+  if (entry.name === "log_crm_note") return "Note saved";
+  return entry.ok ? "Done" : "Couldn’t complete";
 }
 
 export default function AgentPanel({
@@ -52,6 +64,7 @@ export default function AgentPanel({
   planner,
   agentMode,
 }: Props) {
+  void planner;
   const pkg = getPackage(packageId);
   const [busy, setBusy] = useState<string | null>(null);
   const [flash, setFlash] = useState<Flash>(null);
@@ -94,15 +107,15 @@ export default function AgentPanel({
       } else if (kind === "log") {
         setFlash({
           ok: true,
-          message: "Logged to action sheet (CSV)",
+          message: "Saved to the activity log",
           href: "/admin#actions",
         });
       } else {
         setFlash({
           ok: true,
           message: data.simulated
-            ? "Webhook simulated (set WEBHOOK_URL) · logged locally"
-            : `Webhook ${data.result}: ${data.detail}`,
+            ? "Team notification recorded"
+            : `Notification sent`,
           href: "/admin#actions",
         });
       }
@@ -118,11 +131,9 @@ export default function AgentPanel({
 
   if (!pkg.includesAgent) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
-        <span className="font-semibold text-slate-700">Tool-calling agent</span> is a{" "}
-        <span className="font-medium text-indigo-700">Premium</span> feature. Switch
-        package above or open the Premium demo for autonomous multi-step tools +
-        admin audit trail.
+      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-[11px] text-slate-500">
+        Ticket creation and team notifications are available on the{" "}
+        <span className="font-semibold text-indigo-700">Premium</span> plan.
       </div>
     );
   }
@@ -134,25 +145,24 @@ export default function AgentPanel({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
-            Premium · {agentMode ? "agent mode" : "manual tools"}
+            {agentMode ? "Assistant actions" : "Quick actions"}
           </div>
-          <p className="mt-0.5 text-xs text-slate-600">
+          <p className="mt-0.5 text-[11px] text-slate-600">
             {agentMode
-              ? "Autonomous tool loop — search, ticket, notify, gaps. Trace below."
-              : "Manual actions on a grounded answer (citations travel with every action)."}
+              ? "Can look up docs, open tickets, and notify your team."
+              : "Run a follow-up action on the latest answer."}
           </p>
         </div>
         <Link
           href="/admin"
           className="text-[11px] font-semibold text-indigo-700 hover:underline"
         >
-          View admin →
+          Operations →
         </Link>
       </div>
 
-      {/* Tool trace panel — collapsed by default so chat viewport stays tall */}
       {hasTrace && (
-        <div className="mt-3 rounded-lg border border-violet-200/80 bg-white/90 p-3">
+        <div className="mt-2 rounded-lg border border-violet-200/80 bg-white/90 p-2.5">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
@@ -160,21 +170,16 @@ export default function AgentPanel({
               className="flex items-center gap-2 text-left"
             >
               <h3 className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
-                Tool trace · {toolTrace!.length} step{toolTrace!.length === 1 ? "" : "s"}
+                Actions taken · {toolTrace!.length}
               </h3>
               <span className="text-[10px] font-semibold text-indigo-600">
                 {showTrace ? "Hide" : "Show"}
               </span>
             </button>
-            {planner && (
-              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-800">
-                planner: {planner}
-              </span>
-            )}
           </div>
           {!showTrace && (
-            <p className="mt-1.5 truncate text-[11px] text-slate-500">
-              {toolTrace!.map((t) => t.name).join(" → ")}
+            <p className="mt-1 truncate text-[11px] text-slate-500">
+              {toolTrace!.map((t) => actionLabel(t.name)).join(" → ")}
             </p>
           )}
           {showTrace && (
@@ -188,34 +193,12 @@ export default function AgentPanel({
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <code className="font-semibold text-slate-800">{t.name}</code>
-                      <span
-                        className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
-                          t.ok
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {t.ok ? "ok" : "err"}
-                      </span>
-                      {typeof t.ms === "number" && (
-                        <span className="text-[10px] text-slate-400">{t.ms}ms</span>
-                      )}
+                    <div className="font-semibold text-slate-800">
+                      {actionLabel(t.name)}
                     </div>
                     <div className="mt-0.5 truncate text-slate-500">
                       {summarizeResult(t)}
                     </div>
-                    {Object.keys(t.args || {}).length > 0 && (
-                      <details className="mt-1">
-                        <summary className="cursor-pointer text-[10px] text-indigo-600">
-                          args
-                        </summary>
-                        <pre className="mt-1 max-h-20 overflow-auto rounded bg-slate-900/90 p-1.5 text-[9px] text-slate-100">
-                          {JSON.stringify(t.args, null, 2)}
-                        </pre>
-                      </details>
-                    )}
                   </div>
                 </li>
               ))}
@@ -230,21 +213,19 @@ export default function AgentPanel({
         </p>
       )}
 
-      {/* Manual tools (secondary) */}
-      <div className="mt-3">
+      <div className="mt-2">
         <button
           type="button"
           onClick={() => setShowManual((v) => !v)}
           className="text-[11px] font-semibold text-violet-700 hover:underline"
         >
-          {showManual ? "Hide manual tools" : "Show manual tools (optional)"}
+          {showManual ? "Hide more actions" : "More actions"}
         </button>
         {showManual && (
           <div className="mt-2">
             {!manualEnabled ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
-                Manual actions stay locked until CiteQA returns a grounded answer
-                with citations.
+                Actions unlock after a grounded help-center answer.
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -254,7 +235,7 @@ export default function AgentPanel({
                   onClick={() => void run("ticket")}
                   className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-600 disabled:opacity-40"
                 >
-                  {busy === "ticket" ? "Creating…" : "Create support ticket"}
+                  {busy === "ticket" ? "Creating…" : "Create ticket"}
                 </button>
                 <button
                   type="button"
@@ -262,7 +243,7 @@ export default function AgentPanel({
                   onClick={() => void run("log")}
                   className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 transition hover:bg-violet-50 disabled:opacity-40"
                 >
-                  {busy === "log" ? "Logging…" : "Log to sheet"}
+                  {busy === "log" ? "Saving…" : "Log activity"}
                 </button>
                 <button
                   type="button"
@@ -270,7 +251,7 @@ export default function AgentPanel({
                   onClick={() => void run("webhook")}
                   className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 transition hover:bg-violet-50 disabled:opacity-40"
                 >
-                  {busy === "webhook" ? "Sending…" : "Send webhook"}
+                  {busy === "webhook" ? "Sending…" : "Notify team"}
                 </button>
               </div>
             )}
@@ -280,7 +261,7 @@ export default function AgentPanel({
 
       {flash && (
         <div
-          className={`mt-3 rounded-lg px-3 py-2 text-xs ${
+          className={`mt-2 rounded-lg px-3 py-2 text-xs ${
             flash.ok
               ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border border-red-200 bg-red-50 text-red-700"
@@ -291,7 +272,7 @@ export default function AgentPanel({
             <>
               {" · "}
               <Link href={flash.href} className="font-semibold underline">
-                open in admin
+                view in operations
               </Link>
             </>
           )}

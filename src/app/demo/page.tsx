@@ -10,23 +10,21 @@ export default function DemoPage() {
   const pkg = getPackage(packageId);
 
   return (
-    /* Fill everything below the sticky site nav (~3.75rem) — dedicated chat app layout */
     <main className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden bg-white">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-1.5 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-xs font-semibold text-slate-800">
-            Live demo
+            Northstar Support
           </span>
-          <span className="hidden rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 sm:inline">
-            {pkg.name}
-          </span>
-          <span className="hidden truncate text-[11px] text-slate-400 md:inline">
-            {pkg.includesAgent
-              ? "Chat · citations · autonomous agent"
-              : "Chat · citations · retrieval"}
+          <span className="hidden truncate text-[11px] text-slate-400 sm:inline">
+            Answers from your help center
+            {pkg.includesAgent ? " · can open tickets for you" : ""}
           </span>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-slate-400 sm:inline">
+            Plan
+          </span>
           {(["basic", "standard", "premium"] as PackageId[]).map((id) => {
             const p = getPackage(id);
             const active = packageId === id;

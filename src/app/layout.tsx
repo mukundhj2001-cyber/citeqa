@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CiteQA — Premium private RAG + agent actions",
+  title: "CiteQA — Support chat grounded in your docs",
   description:
-    "End-to-end product demo: privacy-first support chatbot with citations, Ollama, uploads, eval suite, and Premium agent actions (tickets · sheet · webhook).",
+    "Help-center chatbot that answers from your docs, links the articles used, and can open tickets or notify your team.",
 };
 
 export default function RootLayout({

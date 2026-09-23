@@ -6,7 +6,7 @@ import { useState } from "react";
 
 const LINKS = [
   { href: "/", label: "Product" },
-  { href: "/demo", label: "Live demo" },
+  { href: "/demo", label: "Support chat" },
   { href: "/admin", label: "Admin" },
 ];
 
@@ -26,7 +26,7 @@ export default function Nav() {
               CiteQA
             </span>
             <span className="hidden text-[10px] text-slate-500 sm:block">
-              Private RAG · citations · agent actions
+              Help chat grounded in your docs
             </span>
           </span>
         </Link>
@@ -55,7 +55,7 @@ export default function Nav() {
             href="/demo"
             className="ml-2 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
           >
-            Open demo
+            Try the chat
           </Link>
         </nav>
 
@@ -88,7 +88,7 @@ export default function Nav() {
               onClick={() => setOpen(false)}
               className="mt-1 rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white"
             >
-              Open demo
+              Try the chat
             </Link>
           </div>
         </div>

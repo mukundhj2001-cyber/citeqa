@@ -74,8 +74,8 @@ export default function DocsPanel({
     if (!idx) return;
     setIndex(idx);
     onIndexChange?.(
-      `${idx.chunkCount ?? "?"} chunks · ${idx.docCount ?? "?"} docs` +
-        (idx.uploadDocCount ? ` · ${idx.uploadDocCount} upload` : "")
+      `${idx.docCount ?? "?"} articles` +
+        (idx.uploadDocCount ? ` · ${idx.uploadDocCount} uploaded` : "")
     );
   };
 
@@ -97,7 +97,7 @@ export default function DocsPanel({
         }
         applyIndex(data.index);
         setDocs(data.docs || []);
-        setSuccess(`Indexed “${data.record?.originalName || file.name}” with local MiniLM.`);
+        setSuccess(`Added “${data.record?.originalName || file.name}” to the help library.`);
       }
       await refresh();
     } catch (e) {
@@ -120,7 +120,7 @@ export default function DocsPanel({
       applyIndex(data.index);
       setDocs(data.docs || []);
       setSuccess(
-        `Re-indexed ${data.index?.chunkCount ?? "?"} chunks from ${data.index?.docCount ?? "?"} docs (local embeddings only).`
+        `Help library updated · ${data.index?.docCount ?? "?"} articles ready.`
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Re-index failed");
@@ -160,9 +160,9 @@ export default function DocsPanel({
       <div className="border-b border-slate-100 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-slate-800">Knowledge base</h2>
+            <h2 className="text-sm font-semibold text-slate-800">Help library</h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              Upload .md / .txt / .pdf · indexed locally (MiniLM)
+              Upload articles (.md / .txt / .pdf)
             </p>
           </div>
           <button
@@ -171,7 +171,7 @@ export default function DocsPanel({
             disabled={disabled}
             className="shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-40"
           >
-            {busy === "reindex" ? "Re-indexing…" : "Re-index"}
+            {busy === "reindex" ? "Updating…" : "Refresh"}
           </button>
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function DocsPanel({
             {busy === "upload" ? "Uploading & indexing…" : "Drop docs here"}
           </div>
           <p className="mt-1 text-[11px] text-slate-500">
-            Markdown, plain text, or PDF · max 5 MB · never sent for embeddings
+            Markdown, plain text, or PDF · max 5 MB
           </p>
           <button
             type="button"
@@ -235,14 +235,9 @@ export default function DocsPanel({
 
         {index && (
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
-            <span className="font-semibold text-slate-800">Index</span>
+            <span className="font-semibold text-slate-800">Library</span>
             {" · "}
-            {index.chunkCount} chunks · {index.docCount} docs
-            {index.fingerprint ? (
-              <span className="mt-0.5 block truncate font-mono text-[10px] text-slate-400">
-                fp {index.fingerprint}
-              </span>
-            ) : null}
+            {index.docCount ?? "?"} articles ready
           </div>
         )}
 

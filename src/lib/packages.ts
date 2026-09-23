@@ -1,4 +1,4 @@
-/** Freelance package tiers shown on landing + lightly enforced in demo UI. */
+/** Plan tiers shown on landing + lightly enforced in demo UI. */
 
 export type PackageId = "basic" | "standard" | "premium";
 
@@ -20,13 +20,13 @@ export const PACKAGES: PackageDef[] = [
   {
     id: "basic",
     name: "Basic",
-    tagline: "Private RAG Q&A on your docs",
+    tagline: "Help chat grounded in your docs",
     priceLabel: "Starter",
     features: [
-      "RAG Q&A grounded in your knowledge base",
-      "Clickable citations (doc · section · snippet)",
-      "Refuse-when-unknown (no invented policy)",
-      "Local MiniLM embeddings — docs never leave for embedding",
+      "Answers from your help center",
+      "Links to the articles used",
+      "Honest “I don’t know” when it’s not in your docs",
+      "Your content stays private",
     ],
     includesAgent: false,
     includesUpload: false,
@@ -36,13 +36,13 @@ export const PACKAGES: PackageDef[] = [
   {
     id: "standard",
     name: "Standard",
-    tagline: "Upload, re-index, eval suite + Ollama",
+    tagline: "Upload docs and keep answers current",
     priceLabel: "Most popular",
     features: [
       "Everything in Basic",
-      "Upload / re-index (.md · .txt · .pdf)",
-      "Offline eval harness (pass/fail report)",
-      "Private Ollama-first answer generation",
+      "Upload help articles (.md · .txt · .pdf)",
+      "Quality checks before you ship",
+      "Private on-prem answer generation",
     ],
     includesAgent: false,
     includesUpload: true,
@@ -52,15 +52,15 @@ export const PACKAGES: PackageDef[] = [
   {
     id: "premium",
     name: "Premium",
-    tagline: "Autonomous tool-calling agent + admin",
+    tagline: "Support assistant that can take action",
     priceLabel: "Full product",
     highlight: true,
     features: [
       "Everything in Standard",
-      "Autonomous tool-calling support agent (multi-step)",
-      "Tools: search · ticket · escalate · CRM note · notify · knowledge gaps",
-      "Transparent tool trace + optional manual actions",
-      "Admin dashboard: docs, eval, tickets, action log",
+      "Creates tickets and escalates to your team",
+      "Notifies ops and logs follow-ups",
+      "Clear “actions taken” trail for each chat",
+      "Operator dashboard for docs, tickets, and activity",
     ],
     includesAgent: true,
     includesUpload: true,

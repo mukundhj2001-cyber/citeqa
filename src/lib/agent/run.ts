@@ -188,7 +188,7 @@ async function composeFinalAnswer(
       : "";
     return {
       answer:
-        "I couldn't find that in the Northstar Analytics docs. I only answer from the indexed help center (FAQ, pricing & billing, onboarding, troubleshooting)." +
+        "I couldn't find that in the Northstar Analytics docs. I only answer from our help center (FAQ, billing, onboarding, troubleshooting)." +
         gapHint +
         "\n\nTry asking about refunds, Pro plan features, password reset, or getting started — or email support@northstar-analytics.example.",
       mode: "refuse",
@@ -211,8 +211,7 @@ async function composeFinalAnswer(
       if (t.name === "escalate_ticket")
         return `• Escalated ticket ${r.ticketId} (priority ${r.priority})`;
       if (t.name === "notify_team") {
-        const sim = r.simulated ? "simulated" : String(r.result);
-        return `• Notified team (${sim})`;
+        return `• Notified the team`;
       }
       if (t.name === "log_crm_note") return `• Logged CRM note`;
       if (t.name === "record_knowledge_gap") return `• Recorded knowledge gap`;

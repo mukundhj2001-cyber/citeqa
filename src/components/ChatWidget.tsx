@@ -19,11 +19,6 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function scoreBar(score: number) {
-  const pct = Math.min(100, Math.round(score * 100));
-  return pct;
-}
-
 export default function ChatWidget({
   packageId = "premium",
   onPackageChange,
@@ -41,32 +36,13 @@ export default function ChatWidget({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
-  const [showRetrieval, setShowRetrieval] = useState(true);
+  const [activeArticle, setActiveArticle] = useState<Citation | null>(null);
   const [agentMode, setAgentMode] = useState(packageId === "premium");
-  const [sideTab, setSideTab] = useState<"sources" | "docs">("sources");
-  const [indexInfo, setIndexInfo] = useState<string>("Indexing…");
+  const [sideTab, setSideTab] = useState<"articles" | "library">("articles");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((d) => {
-        const mode =
-          d.generationMode === "ollama"
-            ? ` · Ollama (${d.ollamaModel || "local"})`
-            : d.generationMode === "openai"
-              ? " · OpenAI"
-              : " · offline quotes";
-        setIndexInfo(`${d.chunkCount} chunks · ${d.docCount} docs${mode}`);
-      })
-      .catch(() => setIndexInfo("Index ready on first question"));
-  }, []);
-
-
-  useEffect(() => {
-    // Premium defaults to Agent mode; Basic/Standard force classic chat.
     if (packageId === "premium") setAgentMode(true);
     else setAgentMode(false);
   }, [packageId]);
@@ -108,8 +84,9 @@ export default function ChatWidget({
           planner: data.planner,
         };
         setMessages((m) => [...m, assistant]);
-        if (data.citations?.[0]) setActiveCitation(data.citations[0]);
-        else setActiveCitation(null);
+        if (data.citations?.[0]) setActiveArticle(data.citations[0]);
+        else setActiveArticle(null);
+        setSideTab("articles");
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
       } finally {
@@ -133,22 +110,30 @@ export default function ChatWidget({
       ? [...messages].slice(0, messages.indexOf(lastAssistant)).reverse().find((m) => m.role === "user")
       : undefined;
 
+  const relatedArticles: Citation[] =
+    lastAssistant?.citations?.length
+      ? lastAssistant.citations
+      : (lastAssistant?.retrieval || []).slice(0, 5).map((r) => ({
+          chunkId: r.id,
+          docTitle: r.docTitle,
+          section: r.section,
+          snippet: r.snippet,
+          score: r.score,
+          rank: r.rank,
+        }));
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-white">
-      {/* Main chat column — owns remaining viewport height */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {/* Slim chat header */}
         <header className="flex shrink-0 items-center gap-3 border-b border-indigo-500/30 bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-white">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-sm font-bold backdrop-blur">
-            CQ
+            NS
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-sm font-semibold tracking-tight">CiteQA</h1>
-              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                {pkg.name}
-              </span>
+              <h1 className="text-sm font-semibold tracking-tight">
+                Northstar Support
+              </h1>
               {pkg.includesAgent && (
                 <div className="flex items-center gap-1">
                   <button
@@ -160,7 +145,7 @@ export default function ChatWidget({
                         : "bg-white/15 text-white hover:bg-white/25"
                     }`}
                   >
-                    Agent
+                    Auto actions
                   </button>
                   <button
                     type="button"
@@ -171,18 +156,17 @@ export default function ChatWidget({
                         : "bg-white/15 text-white hover:bg-white/25"
                     }`}
                   >
-                    Classic
+                    Answers only
                   </button>
                 </div>
               )}
             </div>
             <p className="truncate text-[11px] text-indigo-100">
-              Northstar KB · {indexInfo}
+              We answer from the Northstar help center
             </p>
           </div>
         </header>
 
-        {/* Messages — flexible grow area; must keep min-h-0 so sibling composer cannot crush it */}
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/80 px-4 py-4 sm:px-6 lg:px-8">
           {messages.length === 0 && (
             <EmptyState onPick={(q) => void send(q)} starters={STARTERS} />
@@ -191,10 +175,11 @@ export default function ChatWidget({
             <MessageBubble
               key={m.id}
               message={m}
-              onCitationClick={(c) => {
-                setActiveCitation(c);
+              onArticleClick={(c) => {
+                setActiveArticle(c);
+                setSideTab("articles");
               }}
-              activeId={activeCitation?.chunkId}
+              activeId={activeArticle?.chunkId}
             />
           ))}
           {loading && (
@@ -217,7 +202,6 @@ export default function ChatWidget({
           <div ref={bottomRef} />
         </div>
 
-        {/* Composer pinned to bottom of full-height chat column */}
         <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 sm:px-6">
           <div className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
             <textarea
@@ -226,7 +210,7 @@ export default function ChatWidget({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask about refunds, Pro plan, password reset…"
+              placeholder="Ask about refunds, billing, password reset…"
               className="max-h-28 min-h-[40px] flex-1 resize-none bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
               disabled={loading}
             />
@@ -239,178 +223,146 @@ export default function ChatWidget({
               Send
             </button>
           </div>
-          <div className="mx-auto mt-2 flex w-full max-w-3xl items-center justify-between gap-2">
-            <p className="text-[11px] text-slate-400">
-              Grounded answers with citations · weak matches refuse
-            </p>
+          <div className="mx-auto mt-2 flex w-full max-w-3xl items-center justify-end gap-2">
             <button
               type="button"
-              onClick={() => setSideTab("docs")}
+              onClick={() => setSideTab("library")}
               className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 lg:hidden"
             >
-              Docs
+              Help library
             </button>
           </div>
 
-          <div
-            className={`mx-auto mt-2 max-h-32 w-full max-w-3xl overflow-y-auto ${pkg.includesAgent ? "" : "opacity-70"}`}
-          >
-            <AgentPanel
-              packageId={packageId}
-              question={lastUser?.content ?? ""}
-              answer={lastAssistant?.content ?? ""}
-              citations={lastAssistant?.citations ?? []}
-              refused={lastAssistant?.refused}
-              toolTrace={lastAssistant?.toolTrace}
-              planner={lastAssistant?.planner}
-              agentMode={agentMode}
-            />
-          </div>
+          {pkg.includesAgent && (
+            <div className="mx-auto mt-2 max-h-32 w-full max-w-3xl overflow-y-auto">
+              <AgentPanel
+                packageId={packageId}
+                question={lastUser?.content ?? ""}
+                answer={lastAssistant?.content ?? ""}
+                citations={lastAssistant?.citations ?? []}
+                refused={lastAssistant?.refused}
+                toolTrace={lastAssistant?.toolTrace}
+                planner={lastAssistant?.planner}
+                agentMode={agentMode}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Mobile docs drawer */}
-      {sideTab === "docs" && (
+      {sideTab === "library" && (
         <div className="fixed inset-0 z-40 flex flex-col bg-white lg:hidden">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-800">Knowledge base</h2>
+            <h2 className="text-sm font-semibold text-slate-800">Help library</h2>
             <button
               type="button"
-              onClick={() => setSideTab("sources")}
+              onClick={() => setSideTab("articles")}
               className="text-xs font-medium text-indigo-600"
             >
               Close
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-hidden">
-            <DocsPanel onIndexChange={setIndexInfo} />
+            <DocsPanel />
           </div>
         </div>
       )}
 
-      {/* Side panel */}
       <aside className="hidden min-h-0 w-[320px] shrink-0 flex-col border-l border-slate-200 bg-slate-50/50 lg:flex xl:w-[360px]">
         <div className="flex border-b border-slate-100">
           <button
             type="button"
-            onClick={() => setSideTab("sources")}
+            onClick={() => setSideTab("articles")}
             className={`flex-1 px-3 py-2.5 text-xs font-semibold transition ${
-              sideTab === "sources"
+              sideTab === "articles"
                 ? "border-b-2 border-indigo-600 text-indigo-700"
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Sources
+            Related articles
           </button>
           <button
             type="button"
-            onClick={() => setSideTab("docs")}
+            onClick={() => setSideTab("library")}
             className={`flex-1 px-3 py-2.5 text-xs font-semibold transition ${
-              sideTab === "docs"
+              sideTab === "library"
                 ? "border-b-2 border-indigo-600 text-indigo-700"
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Docs
+            Help library
           </button>
         </div>
 
-        {sideTab === "docs" ? (
+        {sideTab === "library" ? (
           <div className="min-h-0 flex-1">
-            <DocsPanel onIndexChange={setIndexInfo} />
+            <DocsPanel />
           </div>
         ) : (
           <>
-        <div className="border-b border-slate-100 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-800">Sources & retrieval</h2>
-            <button
-              type="button"
-              onClick={() => setShowRetrieval((v) => !v)}
-              className="text-[11px] font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              {showRetrieval ? "Hide ranks" : "Show ranks"}
-            </button>
-          </div>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Click a citation to open the source snippet
-          </p>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-          {activeCitation ? (
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
-                Open source
-              </div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">
-                {activeCitation.docTitle}
-              </div>
-              <div className="text-xs text-slate-500">{activeCitation.section}</div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                {activeCitation.snippet}
+            <div className="border-b border-slate-100 px-4 py-3">
+              <h2 className="text-sm font-semibold text-slate-800">
+                From your help center
+              </h2>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Articles used for the latest answer
               </p>
-              <div className="mt-2 text-[10px] text-slate-400">
-                Rank #{activeCitation.rank} · score {activeCitation.score}
-              </div>
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500">
-              Citations from the latest answer appear here
-            </div>
-          )}
 
-          {showRetrieval && lastAssistant?.retrieval && lastAssistant.retrieval.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Top retrieved chunks
-              </h3>
-              <ul className="space-y-2">
-                {lastAssistant.retrieval.map((r) => (
-                  <li
-                    key={r.id}
-                    className="cursor-pointer rounded-lg border border-slate-200 p-2.5 transition hover:border-indigo-200 hover:bg-indigo-50/40"
-                    onClick={() =>
-                      setActiveCitation({
-                        chunkId: r.id,
-                        docTitle: r.docTitle,
-                        section: r.section,
-                        snippet: r.snippet,
-                        score: r.score,
-                        rank: r.rank,
-                      })
-                    }
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-semibold text-slate-800">
-                        #{r.rank} {r.docTitle}
-                      </span>
-                      <span className="text-[10px] tabular-nums text-slate-500">
-                        {r.score.toFixed(3)}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 text-[10px] text-slate-500">{r.section}</div>
-                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-indigo-500"
-                        style={{ width: `${scoreBar(r.score)}%` }}
-                      />
-                    </div>
-                    <p className="mt-1.5 line-clamp-2 text-[11px] text-slate-600">
-                      {r.snippet}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+              {activeArticle ? (
+                <div className="rounded-xl border border-indigo-100 bg-white p-3 shadow-sm">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                    Opened article
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                    {activeArticle.docTitle}
+                  </div>
+                  <div className="text-xs text-slate-500">{activeArticle.section}</div>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                    {activeArticle.snippet}
+                  </p>
+                </div>
+              ) : null}
 
-          {lastAssistant?.refused && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Weak retrieval — answer refused rather than inventing policy.
+              {relatedArticles.length > 0 ? (
+                <ul className="space-y-2">
+                  {relatedArticles.map((r) => (
+                    <li key={r.chunkId}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveArticle(r)}
+                        className={`w-full rounded-lg border p-2.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40 ${
+                          activeArticle?.chunkId === r.chunkId
+                            ? "border-indigo-300 bg-indigo-50/60"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        <div className="text-[11px] font-semibold text-slate-800">
+                          {r.docTitle}
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-slate-500">
+                          {r.section}
+                        </div>
+                        <p className="mt-1.5 line-clamp-2 text-[11px] text-slate-600">
+                          {r.snippet}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-center text-xs text-slate-500">
+                  Related help articles will appear here after you ask a question
+                </div>
+              )}
+
+              {lastAssistant?.refused && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  This isn’t covered in the help center yet — we didn’t guess.
+                </div>
+              )}
             </div>
-          )}
-        </div>
           </>
         )}
       </aside>
@@ -428,14 +380,14 @@ function EmptyState({
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col justify-center py-8 text-center">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700">
-        CQ
+        NS
       </div>
       <h2 className="mt-4 text-lg font-semibold text-slate-900">
-        Ask Northstar support docs
+        How can we help?
       </h2>
       <p className="mt-1 text-sm text-slate-500">
-        CiteQA retrieves from the knowledge base and cites every claim. Topics
-        outside the corpus are refused.
+        Ask about billing, plans, or getting started — we’ll pull from the
+        Northstar help center.
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {starters.map((q) => (
@@ -449,9 +401,6 @@ function EmptyState({
           </button>
         ))}
       </div>
-      <p className="mt-4 text-[11px] text-slate-400">
-        Try an out-of-corpus question, or open the <span className="font-medium text-slate-500">Docs</span> tab to upload your own.
-      </p>
     </div>
   );
 }
@@ -460,23 +409,21 @@ function Avatar({ bot }: { bot?: boolean }) {
   return (
     <div
       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-        bot
-          ? "bg-indigo-600 text-white"
-          : "bg-slate-200 text-slate-600"
+        bot ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-600"
       }`}
     >
-      {bot ? "CQ" : "You"}
+      {bot ? "NS" : "You"}
     </div>
   );
 }
 
 function MessageBubble({
   message,
-  onCitationClick,
+  onArticleClick,
   activeId,
 }: {
   message: ChatMessage;
-  onCitationClick: (c: Citation) => void;
+  onArticleClick: (c: Citation) => void;
   activeId?: string;
 }) {
   const isUser = message.role === "user";
@@ -493,38 +440,30 @@ function MessageBubble({
         }`}
       >
         <div className="whitespace-pre-wrap">{renderContent(message.content)}</div>
-        {!isUser && message.mode && (
-          <div className="mt-2 text-[10px] uppercase tracking-wide opacity-60">
-            {message.mode === "agent"
-              ? "Agent + tools + citations"
-              : message.mode === "ollama"
-                ? "Ollama (local) + citations"
-                : message.mode === "openai"
-                  ? "OpenAI + citations"
-                  : message.mode === "refuse"
-                    ? "Refused · not in docs"
-                    : "Offline retrieval quotes"}
-          </div>
-        )}
         {!isUser && message.citations && message.citations.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
-            {message.citations.map((c) => (
-              <button
-                key={c.chunkId}
-                type="button"
-                onClick={() => onCitationClick(c)}
-                className={`rounded-md border px-2 py-1 text-left text-[11px] transition ${
-                  activeId === c.chunkId
-                    ? "border-indigo-400 bg-indigo-50 text-indigo-800"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300"
-                }`}
-              >
-                <span className="font-semibold">[{c.rank}]</span> {c.docTitle}
-                <span className="block truncate text-[10px] opacity-70">
-                  {c.section}
-                </span>
-              </button>
-            ))}
+          <div className="mt-3 border-t border-slate-100 pt-2">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              From your help center
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {message.citations.map((c) => (
+                <button
+                  key={c.chunkId}
+                  type="button"
+                  onClick={() => onArticleClick(c)}
+                  className={`rounded-md border px-2 py-1 text-left text-[11px] transition ${
+                    activeId === c.chunkId
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-800"
+                      : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300"
+                  }`}
+                >
+                  <span className="font-semibold">{c.docTitle}</span>
+                  <span className="block truncate text-[10px] opacity-70">
+                    {c.section}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -533,8 +472,10 @@ function MessageBubble({
 }
 
 function renderContent(text: string) {
-  // Lightweight markdown-ish: **bold** and > quotes
-  const parts = text.split(/(\*\*[^*]+\*\*|^> .+$)/gm);
+  const cleaned = text
+    .replace(/\s*\(RAG\)/gi, "")
+    .replace(/\s*·\s*citations?/gi, "");
+  const parts = cleaned.split(/(\*\*[^*]+\*\*|^> .+$)/gm);
   return parts.map((p, i) => {
     if (p.startsWith("**") && p.endsWith("**")) {
       return (
